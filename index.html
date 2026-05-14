@@ -77,12 +77,13 @@
                 <div onclick="navigateTo('admin')" class="nav-item px-3.5 py-2 cursor-pointer hover:bg-zinc-900 rounded-3xl transition-all whitespace-nowrap text-sm flex items-center gap-1.5" id="nav-admin"><i class="fa-solid fa-shield-halved text-xs"></i> Admin Panel</div>
 
                 <div class="flex items-center gap-2 ml-1" id="nav-user-area">
-                    <div onclick="showLoginModal()" class="px-3 py-1.5 text-xs bg-zinc-800 hover:bg-zinc-700 rounded-3xl cursor-pointer flex items-center gap-1.5 whitespace-nowrap" id="nav-login-btn">
-                        <i class="fa-solid fa-user text-xs"></i> 
-                        <span id="login-btn-text" class="text-xs">Login</span>
+                    <div class="px-3 py-1.5 text-xs bg-zinc-800 rounded-3xl flex items-center gap-1.5 whitespace-nowrap" id="nav-user-display">
+                        <i class="fa-solid fa-user text-cyan-400 text-xs"></i>
+                        <span id="nav-username" class="text-xs text-zinc-300"></span>
                     </div>
-                    <div onclick="logoutUser()" class="hidden px-2 py-1 text-xs bg-red-900/60 hover:bg-red-800 text-red-,300 rounded-3xl cursor-pointer items-center" id="logout-btn">
+                    <div onclick="logoutUser()" class="px-2.5 py-1.5 text-xs bg-red-900/60 hover:bg-red-800 text-red-300 rounded-3xl cursor-pointer flex items-center gap-1" id="logout-btn" title="Logout">
                         <i class="fa-solid fa-sign-out-alt text-xs"></i>
+                        <span class="hidden sm:inline">Logout</span>
                     </div>
                 </div>
             </div>
@@ -135,17 +136,31 @@
                     <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
                 </label>
             </div>
-            <div onclick="showLoginModal(); toggleMobileMenu();" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer active:bg-zinc-800" id="mobile-login-item">
-                <i class="fa-solid fa-user w-5"></i>
-                <span id="mobile-login-text">Login / Register</span>
+            <div class="flex items-center gap-3 py-3 border-b border-zinc-700" id="mobile-user-item">
+                <i class="fa-solid fa-user w-5 text-cyan-400"></i>
+                <span id="mobile-username" class="text-sm"></span>
             </div>
-            <div onclick="logoutUser()" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer text-red-400 hidden" id="mobile-logout-item"><i class="fa-solid fa-sign-out-alt w-5"></i><span>Logout</span></div>
+            <div onclick="logoutUser()" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer text-red-400" id="mobile-logout-item"><i class="fa-solid fa-sign-out-alt w-5"></i><span>Logout</span></div>
             <div onclick="toggleMobileMenu()" class="absolute top-8 right-8 text-4xl cursor-pointer"><i class="fa-solid fa-xmark"></i></div>
         </div>
     </div>
 
     <!-- DASHBOARD -->
     <div id="section-dashboard" class="section active max-w-screen-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
+        <!-- Welcome Banner -->
+        <div id="welcome-banner" class="mb-6 bg-gradient-to-r from-purple-900/40 to-cyan-900/40 border border-purple-500/30 rounded-3xl p-5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-cyan-400 rounded-full flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div>
+                    <div class="text-lg font-semibold">Welcome back, <span id="welcome-username" class="text-cyan-400"></span></div>
+                    <div class="text-xs text-zinc-400">Your data is synced and ready</div>
+                </div>
+            </div>
+            <div class="text-xs text-zinc-500" id="welcome-email"></div>
+        </div>
+
         <!-- Header -->
         <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 mb-6">
             <div>
@@ -698,42 +713,71 @@
         </div>
     </div>
 
-    <!-- Login Modal -->
-    <div id="login-modal" class="hidden fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center">
-        <div class="bg-zinc-900 border border-zinc-700 rounded-3xl w-full max-w-md p-8">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-semibold" id="login-modal-title">Login</h2>
-                <button onclick="hideLoginModal()" class="text-2xl">&times;</button>
+    <!-- Auth Screen (full-page overlay) -->
+    <div id="auth-screen" class="fixed inset-0 bg-zinc-950 z-[9999] flex items-center justify-center overflow-y-auto">
+        <div class="matrix-bg"></div>
+        <div class="w-full max-w-md mx-4 my-8 relative z-10">
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-cyan-400 rounded-2xl flex items-center justify-center text-5xl shadow-lg mx-auto mb-4">🌕</div>
+                <h1 class="font-display text-3xl font-bold tracking-tighter">Forex Luna Signal</h1>
+                <p class="text-sm text-zinc-400 mt-1">Lunar AI Trading Platform</p>
             </div>
 
-            <div id="login-form">
+            <!-- Login Form -->
+            <div id="login-form" class="bg-zinc-900/90 border border-zinc-700 rounded-3xl p-8 backdrop-blur-xl">
+                <h2 class="text-2xl font-semibold mb-6">Welcome Back</h2>
+                <div id="login-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/50 rounded-2xl text-sm text-red-300"></div>
+                <div id="login-success" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 rounded-2xl text-sm text-emerald-300"></div>
                 <div class="space-y-4">
                     <div>
-                        <label class="text-xs text-zinc-400">Username</label>
-                        <input id="login-username" type="text" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono">
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Email</label>
+                        <input id="login-email" type="email" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="you@example.com">
                     </div>
                     <div>
-                        <label class="text-xs text-zinc-400">Password</label>
-                        <input id="login-password" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono">
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Password</label>
+                        <input id="login-password" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Enter your password" onkeydown="if(event.key==='Enter')loginUser()">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="remember-me" class="w-4 h-4 rounded bg-black border-zinc-600 text-cyan-400 focus:ring-cyan-400">
+                        <label for="remember-me" class="text-sm text-zinc-400 cursor-pointer">Remember me</label>
                     </div>
                 </div>
-                <button onclick="loginUser()" class="mt-6 w-full py-4 bg-emerald-500 text-black font-semibold rounded-3xl">Login</button>
-                <p class="text-center text-xs text-zinc-400 mt-4">Don't have an account? <span onclick="switchToRegister()" class="text-emerald-400 cursor-pointer">Register</span></p>
+                <button onclick="loginUser()" id="login-btn" class="mt-6 w-full py-4 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-semibold rounded-3xl text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                    <span id="login-btn-label">Login</span>
+                    <i id="login-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+                </button>
+                <p class="text-center text-sm text-zinc-400 mt-5">Don't have an account? <span onclick="switchToRegister()" class="text-cyan-400 cursor-pointer hover:underline font-medium">Create one</span></p>
             </div>
 
-            <div id="register-form" class="hidden">
+            <!-- Register Form -->
+            <div id="register-form" class="hidden bg-zinc-900/90 border border-zinc-700 rounded-3xl p-8 backdrop-blur-xl">
+                <h2 class="text-2xl font-semibold mb-6">Create Account</h2>
+                <div id="register-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/50 rounded-2xl text-sm text-red-300"></div>
+                <div id="register-success" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 rounded-2xl text-sm text-emerald-300"></div>
                 <div class="space-y-4">
                     <div>
-                        <label class="text-xs text-zinc-400">Username</label>
-                        <input id="register-username" type="text" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono">
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Full Name</label>
+                        <input id="register-name" type="text" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Your display name">
                     </div>
                     <div>
-                        <label class="text-xs text-zinc-400">Password</label>
-                        <input id="register-password" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono">
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Email</label>
+                        <input id="register-email" type="email" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="you@example.com">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Password</label>
+                        <input id="register-password" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Min 6 characters">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Confirm Password</label>
+                        <input id="register-confirm" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Re-enter your password" onkeydown="if(event.key==='Enter')registerUser()">
                     </div>
                 </div>
-                <button onclick="registerUser()" class="mt-6 w-full py-4 bg-emerald-500 text-black font-semibold rounded-3xl">Create Account</button>
-                <p class="text-center text-xs text-zinc-400 mt-4">Already have an account? <span onclick="switchToLogin()" class="text-emerald-400 cursor-pointer">Login</span></p>
+                <button onclick="registerUser()" id="register-btn" class="mt-6 w-full py-4 bg-gradient-to-r from-purple-500 to-cyan-400 text-black font-semibold rounded-3xl text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                    <span id="register-btn-label">Create Account</span>
+                    <i id="register-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+                </button>
+                <p class="text-center text-sm text-zinc-400 mt-5">Already have an account? <span onclick="switchToLogin()" class="text-cyan-400 cursor-pointer hover:underline font-medium">Login</span></p>
             </div>
         </div>
     </div>
@@ -779,7 +823,7 @@
         let history = {};
         let connectedAccount = null;
         let savedAccounts = JSON.parse(safeStorage.getItem('saved_mt_accounts') || '[]');
-        let currentUser = safeStorage.getItem('current_user') || null;
+        let currentUser = null;
         let accountBalance = 124850;
         let metaToken = safeStorage.getItem('meta_token') || "";
 
@@ -1122,6 +1166,7 @@
 
             // Update visible trade log
             updateTradeLog();
+            saveUserData();
 
             // Daily loss limit check
             if (pnl < 0) {
@@ -1260,7 +1305,7 @@
             defaultStopLossPips = parseInt(document.getElementById('setting-sl').value) || 50;
             defaultTakeProfitPips = parseInt(document.getElementById('setting-tp').value) || 80;
             dailyLossLimit = parseFloat(document.getElementById('setting-daily-loss').value) || 500;
-
+            saveUserData();
             alert("Settings saved successfully!");
         }
 
@@ -2040,122 +2085,323 @@
             }
         }
 
-        // ==================== USER LOGIN SYSTEM ====================
-        function showLoginModal() {
-            document.getElementById('login-modal').classList.remove('hidden');
-            switchToLogin();
+        // ==================== AUTH SYSTEM (Netlify Identity / GoTrue) ====================
+        const IDENTITY_URL = '/.netlify/identity';
+        let authToken = null;
+
+        function getStoredSession() {
+            try {
+                const raw = safeStorage.getItem('nf_auth_session');
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch { return null; }
         }
 
-        function hideLoginModal() {
-            document.getElementById('login-modal').classList.add('hidden');
+        function storeSession(session) {
+            safeStorage.setItem('nf_auth_session', JSON.stringify(session));
+        }
+
+        function clearSession() {
+            safeStorage.removeItem('nf_auth_session');
+            safeStorage.removeItem('nf_remember_me');
+            authToken = null;
+            currentUser = null;
+        }
+
+        async function refreshToken(refreshToken) {
+            try {
+                const res = await fetch(IDENTITY_URL + '/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(refreshToken)
+                });
+                if (!res.ok) return null;
+                return await res.json();
+            } catch { return null; }
+        }
+
+        async function tryAutoLogin() {
+            const remembered = safeStorage.getItem('nf_remember_me');
+            const session = getStoredSession();
+            if (!session || !remembered) {
+                showAuthScreen();
+                return;
+            }
+            const tokenData = await refreshToken(session.refresh_token);
+            if (!tokenData) {
+                clearSession();
+                showAuthScreen();
+                return;
+            }
+            storeSession({ ...session, access_token: tokenData.access_token, refresh_token: tokenData.refresh_token });
+            authToken = tokenData.access_token;
+            await fetchUserProfile();
+            hideAuthScreen();
+            await loadUserDataFromServer();
+        }
+
+        async function fetchUserProfile() {
+            try {
+                const session = getStoredSession();
+                if (!session) return;
+                const res = await fetch(IDENTITY_URL + '/user', {
+                    headers: { 'Authorization': 'Bearer ' + session.access_token }
+                });
+                if (!res.ok) return;
+                const user = await res.json();
+                currentUser = {
+                    id: user.id,
+                    email: user.email,
+                    name: user.user_metadata?.full_name || user.email.split('@')[0]
+                };
+                updateUserUI();
+            } catch {}
+        }
+
+        function updateUserUI() {
+            if (!currentUser) return;
+            const name = currentUser.name || currentUser.email;
+            const navUsername = document.getElementById('nav-username');
+            if (navUsername) navUsername.textContent = name;
+            const mobileUsername = document.getElementById('mobile-username');
+            if (mobileUsername) mobileUsername.textContent = name;
+            const welcomeUsername = document.getElementById('welcome-username');
+            if (welcomeUsername) welcomeUsername.textContent = name;
+            const welcomeEmail = document.getElementById('welcome-email');
+            if (welcomeEmail) welcomeEmail.textContent = currentUser.email;
+        }
+
+        function showAuthScreen() {
+            document.getElementById('auth-screen').classList.remove('hidden');
+        }
+
+        function hideAuthScreen() {
+            document.getElementById('auth-screen').classList.add('hidden');
         }
 
         function switchToRegister() {
             document.getElementById('login-form').classList.add('hidden');
             document.getElementById('register-form').classList.remove('hidden');
-            document.getElementById('login-modal-title').textContent = 'Create Account';
+            clearAuthMessages();
         }
 
         function switchToLogin() {
             document.getElementById('register-form').classList.add('hidden');
             document.getElementById('login-form').classList.remove('hidden');
-            document.getElementById('login-modal-title').textContent = 'Login';
+            clearAuthMessages();
         }
 
-        function registerUser() {
-            const username = document.getElementById('register-username').value.trim();
+        function clearAuthMessages() {
+            ['login-error','login-success','register-error','register-success'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.classList.add('hidden'); el.textContent = ''; }
+            });
+        }
+
+        function showAuthMsg(id, msg) {
+            const el = document.getElementById(id);
+            if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+        }
+
+        async function registerUser() {
+            clearAuthMessages();
+            const name = document.getElementById('register-name').value.trim();
+            const email = document.getElementById('register-email').value.trim();
             const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm').value;
 
-            if (!username || !password) {
-                alert("Please enter username and password");
+            if (!name || !email || !password || !confirm) {
+                showAuthMsg('register-error', 'Please fill in all fields.');
+                return;
+            }
+            if (password.length < 6) {
+                showAuthMsg('register-error', 'Password must be at least 6 characters.');
+                return;
+            }
+            if (password !== confirm) {
+                showAuthMsg('register-error', 'Passwords do not match.');
                 return;
             }
 
-            let users = JSON.parse(safeStorage.getItem('app_users') || '{}');
+            document.getElementById('register-spinner').classList.remove('hidden');
+            document.getElementById('register-btn').disabled = true;
 
-            if (users[username]) {
-                alert("Username already exists");
-                return;
+            try {
+                const res = await fetch(IDENTITY_URL + '/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, data: { full_name: name } })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    showAuthMsg('register-error', data.msg || data.error_description || 'Signup failed. Try a different email.');
+                    return;
+                }
+                if (data.confirmed_at || data.confirmation_sent_at) {
+                    showAuthMsg('register-success', 'Account created successfully! Please check your email to confirm, then login.');
+                } else {
+                    showAuthMsg('register-success', 'Account created successfully! Please login.');
+                }
+                setTimeout(() => switchToLogin(), 2000);
+            } catch (e) {
+                showAuthMsg('register-error', 'Network error. Please try again.');
+            } finally {
+                document.getElementById('register-spinner').classList.add('hidden');
+                document.getElementById('register-btn').disabled = false;
             }
-
-            users[username] = { password: password };
-            safeStorage.setItem('app_users', JSON.stringify(users));
-
-            // Create empty data for new user
-            safeStorage.setItem(`user_${username}_data`, JSON.stringify({
-                savedAccounts: [],
-                propSettings: propSettings,
-                tradeHistory: []
-            }));
-
-            alert("Account created! Please login.");
-            switchToLogin();
         }
 
-        function loginUser() {
-            const username = document.getElementById('login-username').value.trim();
+        async function loginUser() {
+            clearAuthMessages();
+            const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
+            const rememberMe = document.getElementById('remember-me').checked;
 
-            let users = JSON.parse(safeStorage.getItem('app_users') || '{}');
-
-            if (!users[username] || users[username].password !== password) {
-                alert("Invalid username or password");
+            if (!email || !password) {
+                showAuthMsg('login-error', 'Please enter email and password.');
                 return;
             }
 
-            currentUser = username;
-            safeStorage.setItem('current_user', currentUser);
+            document.getElementById('login-spinner').classList.remove('hidden');
+            document.getElementById('login-btn').disabled = true;
 
-            // Load user data
-            loadUserData();
-
-            hideLoginModal();
-            document.getElementById('login-btn-text').textContent = username;
-            
-            // Show logout button
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) logoutBtn.classList.remove('hidden');
-            
-            alert(`Welcome back, ${username}!`);
+            try {
+                const res = await fetch(IDENTITY_URL + '/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'grant_type=password&username=' + encodeURIComponent(email) + '&password=' + encodeURIComponent(password)
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    const msg = data.error_description || data.msg || 'Invalid email or password.';
+                    showAuthMsg('login-error', msg);
+                    return;
+                }
+                authToken = data.access_token;
+                storeSession(data);
+                if (rememberMe) {
+                    safeStorage.setItem('nf_remember_me', 'true');
+                }
+                await fetchUserProfile();
+                hideAuthScreen();
+                await loadUserDataFromServer();
+            } catch (e) {
+                showAuthMsg('login-error', 'Network error. Please try again.');
+            } finally {
+                document.getElementById('login-spinner').classList.add('hidden');
+                document.getElementById('login-btn').disabled = false;
+            }
         }
 
-        function loadUserData() {
-            if (!currentUser) return;
-
-            const userDataKey = `user_${currentUser}_data`;
-            const savedData = safeStorage.getItem(userDataKey);
-
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                if (data.savedAccounts) savedAccounts = data.savedAccounts;
-                if (data.propSettings) propSettings = { ...propSettings, ...data.propSettings };
-                if (data.tradeHistory) tradeHistory = data.tradeHistory;
+        async function logoutUser() {
+            const session = getStoredSession();
+            if (session) {
+                try {
+                    await fetch(IDENTITY_URL + '/logout', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + session.access_token }
+                    });
+                } catch {}
             }
+            await saveUserDataToServer();
+            clearSession();
+            currentUser = null;
+            savedAccounts = [];
+            tradeHistory = [];
+            metaToken = '';
+            location.reload();
+        }
+
+        async function loadUserDataFromServer() {
+            const session = getStoredSession();
+            if (!session) return;
+            try {
+                const res = await fetch('/api/user-data', {
+                    headers: { 'Authorization': 'Bearer ' + session.access_token }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.savedAccounts && data.savedAccounts.length > 0) savedAccounts = data.savedAccounts;
+                if (data.propSettings && Object.keys(data.propSettings).length > 0) propSettings = { ...propSettings, ...data.propSettings };
+                if (data.tradeHistory && data.tradeHistory.length > 0) tradeHistory = data.tradeHistory;
+                if (data.metaToken) {
+                    metaToken = data.metaToken;
+                    safeStorage.setItem('meta_token', metaToken);
+                }
+                if (savedAccounts.length > 0) {
+                    connectedAccount = savedAccounts[savedAccounts.length - 1];
+                }
+                updatePortfolioUI();
+                renderSavedAccounts();
+            } catch (e) {
+                console.log('[Data] Failed to load from server, using local data');
+            }
+        }
+
+        async function saveUserDataToServer() {
+            const session = getStoredSession();
+            if (!session) return;
+            try {
+                await fetch('/api/user-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + session.access_token
+                    },
+                    body: JSON.stringify({
+                        savedAccounts: savedAccounts,
+                        propSettings: propSettings,
+                        tradeHistory: tradeHistory,
+                        metaToken: metaToken
+                    })
+                });
+            } catch {}
         }
 
         function saveUserData() {
             if (!currentUser) return;
-
-            const userDataKey = `user_${currentUser}_data`;
-            const dataToSave = {
-                savedAccounts: savedAccounts,
-                propSettings: propSettings,
-                tradeHistory: tradeHistory
-            };
-            safeStorage.setItem(userDataKey, JSON.stringify(dataToSave));
+            saveUserDataToServer();
         }
 
-        function logoutUser() {
-            saveUserData();
-            currentUser = null;
-            safeStorage.removeItem('current_user');
-            document.getElementById('login-btn-text').textContent = 'Login';
-            
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) logoutBtn.classList.add('hidden');
-            
-            alert("Logged out successfully.");
-            location.reload();
+        function loadUserData() {
+            if (!currentUser) return;
+            loadUserDataFromServer();
+        }
+
+        async function handleAuthCallback() {
+            const hash = window.location.hash;
+            if (hash.includes('confirmation_token=')) {
+                const token = hash.split('confirmation_token=')[1]?.split('&')[0];
+                if (token) {
+                    try {
+                        await fetch(IDENTITY_URL + '/verify', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ token, type: 'signup' })
+                        });
+                    } catch {}
+                    window.location.hash = '';
+                    showAuthScreen();
+                    switchToLogin();
+                    setTimeout(() => showAuthMsg('login-success', 'Email confirmed! You can now login.'), 300);
+                    return true;
+                }
+            }
+            if (hash.includes('recovery_token=')) {
+                window.location.hash = '';
+                showAuthScreen();
+                switchToLogin();
+                return true;
+            }
+            return false;
+        }
+
+        function showLoginModal() {
+            showAuthScreen();
+        }
+
+        function hideLoginModal() {
+            if (currentUser) hideAuthScreen();
         }
 
         function adminLogin() {
@@ -2206,6 +2452,7 @@
             }
             metaToken = token;
             safeStorage.setItem('meta_token', token);
+            saveUserData();
             alert("✅ MetaAPI token saved! You can now connect to real MT4/MT5 accounts.");
         }
 
@@ -2298,25 +2545,23 @@
             // Force correct password
             safeStorage.removeItem('admin_password');
             currentAdminPassword = "Sickhead45!";
-            
+
             // Auto-load hardcoded MetaAPI token if none exists
             if (!metaToken && typeof HARDCODED_META_TOKEN !== 'undefined' && HARDCODED_META_TOKEN.length > 50) {
                 metaToken = HARDCODED_META_TOKEN;
                 safeStorage.setItem('meta_token', metaToken);
-                console.log('%c[MetaAPI] Token auto-loaded from hardcoded value', 'color:#22c55e');
             }
-            
+
             updateLunarPanel();
             updatePrices();
             updatePortfolioUI();
-            
-            // Load user session if exists
-            if (currentUser) {
-                document.getElementById('login-btn-text').textContent = currentUser;
-                loadUserData();
-                const logoutBtn = document.getElementById('logout-btn');
-                if (logoutBtn) logoutBtn.classList.remove('hidden');
-            }
+
+            // Handle auth callback (email confirmation etc) then try auto-login
+            handleAuthCallback().then(handled => {
+                if (!handled) {
+                    tryAutoLogin();
+                }
+            });
 
             // Load previously saved MT accounts
             if (savedAccounts.length > 0) {
@@ -2326,7 +2571,7 @@
                     if (statusPanel && connectedAccount) {
                         document.getElementById('meta-dot').className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
                         document.getElementById('meta-status-text').innerHTML = `✅ ${connectedAccount.platform.toUpperCase()}`;
-                        document.getElementById('connected-account').innerHTML = 
+                        document.getElementById('connected-account').innerHTML =
                             `${connectedAccount.platform.toUpperCase()} • ${connectedAccount.server} • ${connectedAccount.login}`;
                         document.getElementById('account-balance').innerHTML = `$${accountBalance.toLocaleString()}`;
                         statusPanel.classList.remove('hidden');
@@ -2374,7 +2619,10 @@
             const adminPassInput = document.getElementById('admin-password');
             if (adminPassInput) adminPassInput.value = "Sickhead45!";
             
-            console.log('%c✅ Forex Luna Signal — FULL VERSION LOADED (Password: Sickhead45!)', 'color:#00ffff');
+            console.log('%c✅ Forex Luna Signal — FULL VERSION LOADED', 'color:#00ffff');
+
+            // Auto-save user data periodically
+            setInterval(() => { if (currentUser) saveUserDataToServer(); }, 60000);
         }
         window.onload = init;
     </script>

@@ -729,8 +729,8 @@
                 <h2 class="text-2xl font-semibold mb-6">Welcome Back</h2>
                 <div id="login-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/50 rounded-2xl text-sm text-red-300"></div>
                 <div id="login-resend" class="hidden mb-4 p-3 bg-amber-900/50 border border-amber-500/50 rounded-2xl text-sm text-amber-300 text-center">
-                    <span>Didn't get the email or link expired?</span>
-                    <button onclick="resendConfirmation()" id="resend-btn" class="ml-2 underline font-semibold text-cyan-400 hover:text-cyan-300">Resend verification</button>
+                    <span>Link expired or didn't get the email?</span>
+                    <button onclick="resendConfirmation()" id="resend-btn" class="ml-2 underline font-semibold text-cyan-400 hover:text-cyan-300">Resend verification (valid for 24 hours)</button>
                     <i id="resend-spinner" class="fa-solid fa-spinner fa-spin hidden ml-1"></i>
                 </div>
                 <div id="login-success" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 rounded-2xl text-sm text-emerald-300"></div>
@@ -759,7 +759,7 @@
             <!-- Forgot Password Form -->
             <div id="forgot-password-form" class="hidden bg-zinc-900/90 border border-zinc-700 rounded-3xl p-8 backdrop-blur-xl">
                 <h2 class="text-2xl font-semibold mb-2">Reset Password</h2>
-                <p class="text-sm text-zinc-400 mb-6">Enter your email and we'll send you a reset link.</p>
+                <p class="text-sm text-zinc-400 mb-6">Enter your email and we'll send you a reset link (valid for 1 hour).</p>
                 <div id="forgot-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/50 rounded-2xl text-sm text-red-300"></div>
                 <div id="forgot-success" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 rounded-2xl text-sm text-emerald-300"></div>
                 <div class="space-y-4">
@@ -781,6 +781,9 @@
                 <p class="text-sm text-zinc-400 mb-6">Choose a strong password for your account.</p>
                 <div id="reset-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/50 rounded-2xl text-sm text-red-300"></div>
                 <div id="reset-success" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 rounded-2xl text-sm text-emerald-300"></div>
+                <div id="reset-expired-actions" class="hidden mb-4 text-center">
+                    <button onclick="switchToForgotPassword()" class="text-cyan-400 hover:underline font-medium text-sm">Request a new reset link</button>
+                </div>
                 <div class="space-y-4">
                     <div>
                         <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">New Password</label>
@@ -795,6 +798,7 @@
                     <span id="reset-btn-label">Update Password</span>
                     <i id="reset-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
                 </button>
+                <p class="text-center text-sm text-zinc-400 mt-3"><span onclick="switchToLogin()" class="text-cyan-400 cursor-pointer hover:underline font-medium">Back to Login</span></p>
             </div>
 
             <!-- Register Form -->
@@ -802,6 +806,7 @@
                 <h2 class="text-2xl font-semibold mb-6">Create Account</h2>
                 <div id="register-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/50 rounded-2xl text-sm text-red-300"></div>
                 <div id="register-success" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 rounded-2xl text-sm text-emerald-300"></div>
+                <div id="register-info" class="hidden mb-4 p-3 bg-blue-900/50 border border-blue-500/50 rounded-2xl text-sm text-blue-300"></div>
                 <div class="space-y-4">
                     <div>
                         <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Full Name</label>
@@ -2151,8 +2156,10 @@
         function clearSession() {
             safeStorage.removeItem('nf_auth_session');
             safeStorage.removeItem('nf_remember_me');
+            sessionStorage.removeItem('nf_recovery_token');
             authToken = null;
             currentUser = null;
+            recoveryAccessToken = null;
         }
 
         async function refreshToken(refreshToken) {
@@ -2259,12 +2266,14 @@
         }
 
         function clearAuthMessages() {
-            ['login-error','login-success','register-error','register-success','forgot-error','forgot-success','reset-error','reset-success'].forEach(id => {
+            ['login-error','login-success','register-error','register-success','register-info','forgot-error','forgot-success','reset-error','reset-success'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) { el.classList.add('hidden'); el.textContent = ''; }
             });
             const resendEl = document.getElementById('login-resend');
             if (resendEl) resendEl.classList.add('hidden');
+            const resetExpired = document.getElementById('reset-expired-actions');
+            if (resetExpired) resetExpired.classList.add('hidden');
         }
 
         function showAuthMsg(id, msg) {
@@ -2308,12 +2317,14 @@
                 }
                 if (data.confirmed_at) {
                     showAuthMsg('register-success', 'Account created and verified! You can now login.');
+                    setTimeout(() => switchToLogin(), 2000);
                 } else if (data.confirmation_sent_at) {
-                    showAuthMsg('register-success', 'Account created! A confirmation email has been sent — please click the link in your inbox before logging in.');
+                    showAuthMsg('register-success', 'Verification link sent! Please check your email (valid for 24 hours). Click the link to confirm your account before logging in.');
+                    setTimeout(() => switchToLogin(), 3000);
                 } else {
                     showAuthMsg('register-success', 'Account created successfully! Please login.');
+                    setTimeout(() => switchToLogin(), 2000);
                 }
-                setTimeout(() => switchToLogin(), 2000);
             } catch (e) {
                 showAuthMsg('register-error', 'Network error. Please try again.');
             } finally {
@@ -2338,7 +2349,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
                 });
-                showAuthMsg('login-success', 'We sent a recovery email to ' + email + '. Click the link to verify your account and set your password, then login.');
+                showAuthMsg('login-success', 'Verification link sent to ' + email + '. Please check your email (valid for 24 hours). Click the link to verify your account, then login.');
                 document.getElementById('login-resend').classList.add('hidden');
                 document.getElementById('login-error').classList.add('hidden');
             } catch {
@@ -2371,7 +2382,7 @@
                     showAuthMsg('forgot-error', data.msg || data.error_description || 'Could not send reset email. Please check your email address.');
                     return;
                 }
-                showAuthMsg('forgot-success', 'Password reset link sent! Check your email inbox.');
+                showAuthMsg('forgot-success', 'Password reset link sent! Please check your email (valid for 1 hour).');
             } catch (e) {
                 showAuthMsg('forgot-error', 'Network error. Please try again.');
             } finally {
@@ -2398,7 +2409,7 @@
                 return;
             }
             if (!recoveryAccessToken) {
-                showAuthMsg('reset-error', 'Recovery session expired. Please request a new reset link.');
+                showAuthMsg('reset-error', 'Recovery session expired. Please request a new reset link (valid for 1 hour).');
                 return;
             }
 
@@ -2420,7 +2431,8 @@
                     return;
                 }
                 recoveryAccessToken = null;
-                showAuthMsg('reset-success', 'Password updated successfully!');
+                sessionStorage.removeItem('nf_recovery_token');
+                showAuthMsg('reset-success', 'Password updated successfully! Redirecting to login...');
                 setTimeout(() => switchToLogin(), 2000);
             } catch (e) {
                 showAuthMsg('reset-error', 'Network error. Please try again.');
@@ -2455,7 +2467,7 @@
                     const raw = (data.error_description || data.msg || '').toLowerCase();
                     let msg;
                     if (raw.includes('email not confirmed') || raw.includes('not confirmed')) {
-                        msg = 'Email not verified. Please check your inbox for the confirmation email.';
+                        msg = 'Email not verified. Please check your inbox for the confirmation email, or click "Resend verification" below to get a new link (valid for 24 hours).';
                         showAuthMsg('login-error', msg);
                         document.getElementById('login-resend').classList.remove('hidden');
                     } else if (raw.includes('invalid') || raw.includes('credentials') || raw.includes('password')) {
@@ -2563,15 +2575,17 @@
             loadUserDataFromServer();
         }
 
-        let recoveryAccessToken = null;
+        let recoveryAccessToken = sessionStorage.getItem('nf_recovery_token') || null;
 
         async function handleAuthCallback() {
             const hash = window.location.hash;
             if (hash.includes('confirmation_token=')) {
-                const token = hash.split('confirmation_token=')[1]?.split('&')[0];
+                const rawToken = hash.split('confirmation_token=')[1]?.split('&')[0];
+                const token = rawToken ? decodeURIComponent(rawToken) : null;
                 if (token) {
                     window.location.hash = '';
                     let verified = false;
+                    let errorMsg = '';
                     try {
                         const res = await fetch(IDENTITY_URL + '/verify', {
                             method: 'POST',
@@ -2590,6 +2604,9 @@
                                 return true;
                             }
                             verified = true;
+                        } else {
+                            const data = await res.json().catch(() => ({}));
+                            errorMsg = data.msg || data.error_description || '';
                         }
                     } catch {}
                     showAuthScreen();
@@ -2597,15 +2614,24 @@
                     if (verified) {
                         setTimeout(() => showAuthMsg('login-success', 'Email confirmed! You can now login.'), 300);
                     } else {
-                        setTimeout(() => showAuthMsg('login-error', 'Email confirmation failed. The link may have expired. Please try signing up again or request a new confirmation.'), 300);
+                        const isExpired = errorMsg.toLowerCase().includes('expired') || errorMsg.toLowerCase().includes('invalid');
+                        const msg = isExpired
+                            ? 'This verification link has expired. Please enter your email below and click "Resend verification" to get a new link (valid for 24 hours).'
+                            : 'Email confirmation failed. The link may have expired or already been used. Enter your email and click "Resend verification" for a new link.';
+                        setTimeout(() => {
+                            showAuthMsg('login-error', msg);
+                            document.getElementById('login-resend').classList.remove('hidden');
+                        }, 300);
                     }
                     return true;
                 }
             }
             if (hash.includes('recovery_token=')) {
-                const token = hash.split('recovery_token=')[1]?.split('&')[0];
+                const rawToken = hash.split('recovery_token=')[1]?.split('&')[0];
+                const token = rawToken ? decodeURIComponent(rawToken) : null;
                 window.location.hash = '';
                 if (token) {
+                    let errorMsg = '';
                     try {
                         const res = await fetch(IDENTITY_URL + '/verify', {
                             method: 'POST',
@@ -2615,18 +2641,29 @@
                         if (res.ok) {
                             const data = await res.json();
                             recoveryAccessToken = data.access_token;
+                            sessionStorage.setItem('nf_recovery_token', recoveryAccessToken);
+                        } else {
+                            const data = await res.json().catch(() => ({}));
+                            errorMsg = data.msg || data.error_description || '';
                         }
                     } catch {}
                     showAuthScreen();
                     switchToResetPassword();
                     if (!recoveryAccessToken) {
-                        setTimeout(() => showAuthMsg('reset-error', 'Recovery link has expired. Please request a new one.'), 300);
+                        setTimeout(() => {
+                            showAuthMsg('reset-error', 'This password reset link has expired. Please request a new one (valid for 1 hour).');
+                            const expiredEl = document.getElementById('reset-expired-actions');
+                            if (expiredEl) expiredEl.classList.remove('hidden');
+                        }, 300);
                     }
                     return true;
                 }
                 showAuthScreen();
                 switchToLogin();
                 return true;
+            }
+            if (!recoveryAccessToken && sessionStorage.getItem('nf_recovery_token')) {
+                recoveryAccessToken = sessionStorage.getItem('nf_recovery_token');
             }
             return false;
         }

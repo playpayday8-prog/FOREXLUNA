@@ -31,6 +31,23 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+
+        /* Trade confirmation popup */
+        .trade-popup-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99999;
+            display: flex; align-items: center; justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        .trade-popup {
+            background: rgba(24,24,27,0.97); border: 1px solid #22c55e; border-radius: 1rem;
+            padding: 1rem 1.25rem; max-width: 340px; width: 90%; position: relative;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        .trade-popup-close {
+            position: absolute; top: 0.5rem; right: 0.75rem; background: none; border: none;
+            color: #a1a1aa; font-size: 1.1rem; cursor: pointer; line-height: 1;
+        }
+        .trade-popup-close:hover { color: #fff; }
     </style>
 </head>
 <body class="bg-zinc-950 text-white relative overflow-x-hidden">
@@ -38,7 +55,7 @@
 
     <!-- NAV -->
     <nav class="border-b border-zinc-800 bg-zinc-950/95 backdrop-blur-xl sticky top-0 z-50">
-        <div class="max-w-screen-2xl mx-auto px-4 sm:px-8 h-14 flex items-center justify-between">
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-8 min-h-[3.5rem] py-2 flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-cyan-400 rounded-2xl flex items-center justify-center text-4xl shadow-lg">🌕</div>
                 <div>
@@ -57,7 +74,8 @@
                 <div onclick="navigateTo('prop')" class="nav-item px-3.5 py-2 cursor-pointer hover:bg-zinc-900 rounded-3xl transition-all whitespace-nowrap text-sm" id="nav-prop">Prop Firm</div>
                 <div onclick="navigateTo('journal')" class="nav-item px-3.5 py-2 cursor-pointer hover:bg-zinc-900 rounded-3xl transition-all whitespace-nowrap text-sm" id="nav-journal">Journal</div>
                 <div onclick="navigateTo('status')" class="nav-item px-3.5 py-2 cursor-pointer hover:bg-zinc-900 rounded-3xl transition-all whitespace-nowrap text-sm" id="nav-status">Status</div>
-                
+                <div onclick="navigateTo('admin')" class="nav-item px-3.5 py-2 cursor-pointer hover:bg-zinc-900 rounded-3xl transition-all whitespace-nowrap text-sm flex items-center gap-1.5" id="nav-admin"><i class="fa-solid fa-shield-halved text-xs"></i> Admin Panel</div>
+
                 <div class="flex items-center gap-2 ml-1" id="nav-user-area">
                     <div onclick="showLoginModal()" class="px-3 py-1.5 text-xs bg-zinc-800 hover:bg-zinc-700 rounded-3xl cursor-pointer flex items-center gap-1.5 whitespace-nowrap" id="nav-login-btn">
                         <i class="fa-solid fa-user text-xs"></i> 
@@ -79,6 +97,13 @@
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="auto-trade-toggle" class="sr-only peer" onchange="toggleAutoMode()">
                         <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                </div>
+                <div class="hidden sm:flex items-center gap-2 bg-zinc-900 border border-red-500/30 rounded-3xl px-3 py-1">
+                    <span id="live-mode-label" class="text-xs text-zinc-400">DEMO MODE</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="nav-live-toggle" class="sr-only peer" onchange="toggleLiveTradingFromNav()">
+                        <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
                     </label>
                 </div>
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl p-2"><i id="hamburger-icon" class="fa-solid fa-bars"></i></button>
@@ -103,6 +128,13 @@
             <div onclick="navigateTo('journal')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-book w-5"></i><span>Trade Journal</span></div>
             <div onclick="navigateTo('status')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-info-circle w-5"></i><span>Platform Status</span></div>
             <div onclick="navigateTo('settings')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-cog w-5"></i><span>Settings</span></div>
+            <div class="flex items-center justify-between py-3 border-b border-zinc-700">
+                <div class="flex items-center gap-3"><i class="fa-solid fa-exclamation-triangle w-5 text-red-400"></i><span id="mobile-live-label" class="text-sm">DEMO MODE</span></div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="mobile-live-toggle" class="sr-only peer" onchange="liveTradingEnabled=this.checked;updateLiveTradingUI();">
+                    <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
+                </label>
+            </div>
             <div onclick="showLoginModal(); toggleMobileMenu();" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer active:bg-zinc-800" id="mobile-login-item">
                 <i class="fa-solid fa-user w-5"></i>
                 <span id="mobile-login-text">Login / Register</span>
@@ -275,12 +307,16 @@
                         <i class="fa-solid fa-exclamation-triangle text-red-400"></i>
                         <span class="font-semibold text-red-400">LIVE TRADING MODE</span>
                     </div>
-                    <p class="text-xs text-zinc-400 mt-1">When enabled, trades will be sent to your real account via MetaAPI</p>
+                    <p class="text-xs text-zinc-400 mt-1">Toggle between <span class="text-zinc-300 font-medium">DEMO MODE</span> and <span class="text-red-400 font-medium">LIVE TRADING MODE</span></p>
                 </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="live-trading-toggle" class="sr-only peer" onchange="toggleLiveTrading()">
-                    <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
-                </label>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-zinc-500">DEMO</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="live-trading-toggle" class="sr-only peer" onchange="toggleLiveTrading()">
+                        <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+                    </label>
+                    <span class="text-xs text-red-400">LIVE</span>
+                </div>
             </div>
             <div id="live-warning" class="hidden mt-4 text-xs bg-red-950 border border-red-500/30 rounded-2xl p-3 text-red-300">
                 ⚠️ <strong>Warning:</strong> Live trading is enabled. All trades will be executed on your real Prop Firm account. Use with caution.
@@ -805,11 +841,20 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active'));
             const navEl = document.getElementById('nav-' + section);
             if (navEl) navEl.classList.add('nav-active');
+            window.location.hash = section;
 
             // Refresh dynamic pages
             if (section === 'journal') updateJournalTable();
             if (section === 'status') updateStatusPage();
         }
+
+        function handleHashNavigation() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && document.getElementById('section-' + hash)) {
+                navigateTo(hash);
+            }
+        }
+        window.addEventListener('hashchange', handleHashNavigation);
 
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
@@ -1002,7 +1047,14 @@
                 logTrade(pair, direction, lotSize, confidence, pnl);
                 
                 const isAuto = confidence > 80 && autoTradeEnabled;
-                alert(`${isAuto ? '✅ AUTO EXECUTED (SIMULATED)' : '✅ MANUAL TRADE (SIMULATED)'}\n${direction} ${pair}\nLot: ${lotSize}\nSL: ${slPips} pips | TP: ${tpPips} pips\nConfidence: ${confidence}%`);
+                showTradePopup(isAuto ? 'Auto Trade Executed (Simulated)' : 'Trade Executed Successfully', [
+                    {label: 'Pair', value: pair},
+                    {label: 'Direction', value: direction},
+                    {label: 'Lot Size', value: lotSize},
+                    {label: 'Stop Loss', value: slPips + ' pips'},
+                    {label: 'Take Profit', value: tpPips + ' pips'},
+                    {label: 'Confidence', value: confidence + '%'}
+                ]);
             }
         }
 
@@ -1029,7 +1081,13 @@
             }
             const pnl = simulateTradePnL(direction, 65);
             logTrade(pair, direction, 0.5, 65, pnl);
-            alert(`✅ Manual ${direction} order opened for ${pair}\nSimulated PnL: $${pnl}`);
+            showTradePopup('Trade Executed Successfully', [
+                {label: 'Pair', value: pair},
+                {label: 'Direction', value: direction},
+                {label: 'Lot Size', value: '0.5'},
+                {label: 'Confidence', value: '65%'},
+                {label: 'Simulated PnL', value: '$' + pnl}
+            ]);
         }
 
         function simulateTradePnL(direction, confidence) {
@@ -1379,17 +1437,63 @@
             }, 2200);
         }
 
-        function toggleLiveTrading() {
-            liveTradingEnabled = document.getElementById('live-trading-toggle').checked;
+        function showTradePopup(title, details) {
+            const existing = document.getElementById('trade-popup-overlay');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'trade-popup-overlay';
+            overlay.className = 'trade-popup-overlay';
+            overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+            const detailsHtml = details.map(d => `<div class="flex justify-between"><span class="text-zinc-400">${d.label}</span><span class="font-medium">${d.value}</span></div>`).join('');
+
+            overlay.innerHTML = `
+                <div class="trade-popup">
+                    <button class="trade-popup-close" onclick="document.getElementById('trade-popup-overlay').remove()">&times;</button>
+                    <div class="text-center mb-3">
+                        <span class="text-2xl text-emerald-400">✓</span>
+                        <div class="text-sm font-semibold mt-1">${title}</div>
+                    </div>
+                    <div class="space-y-1.5 text-xs">${detailsHtml}</div>
+                </div>`;
+
+            document.body.appendChild(overlay);
+            setTimeout(() => { if (document.getElementById('trade-popup-overlay')) overlay.remove(); }, 5000);
+        }
+
+        function updateLiveTradingUI() {
             const warning = document.getElementById('live-warning');
+            const label = document.getElementById('live-mode-label');
+            const mobileLabel = document.getElementById('mobile-live-label');
+            const navToggle = document.getElementById('nav-live-toggle');
+            const accountToggle = document.getElementById('live-trading-toggle');
+            const mobileToggle = document.getElementById('mobile-live-toggle');
+            if (navToggle) navToggle.checked = liveTradingEnabled;
+            if (accountToggle) accountToggle.checked = liveTradingEnabled;
+            if (mobileToggle) mobileToggle.checked = liveTradingEnabled;
 
             if (liveTradingEnabled) {
                 warning.classList.remove('hidden');
+                if (label) { label.textContent = 'LIVE TRADING'; label.className = 'text-xs text-red-400 font-semibold'; }
+                if (mobileLabel) { mobileLabel.textContent = 'LIVE TRADING'; mobileLabel.className = 'text-sm text-red-400 font-semibold'; }
                 console.log('%c[LIVE] Live Trading Mode ENABLED — Real orders will be sent', 'color:#ef4444; font-weight:bold');
             } else {
                 warning.classList.add('hidden');
+                if (label) { label.textContent = 'DEMO MODE'; label.className = 'text-xs text-zinc-400'; }
+                if (mobileLabel) { mobileLabel.textContent = 'DEMO MODE'; mobileLabel.className = 'text-sm'; }
                 console.log('%c[LIVE] Live Trading Mode DISABLED — Back to simulation', 'color:#eab308');
             }
+        }
+
+        function toggleLiveTrading() {
+            liveTradingEnabled = document.getElementById('live-trading-toggle').checked;
+            updateLiveTradingUI();
+        }
+
+        function toggleLiveTradingFromNav() {
+            liveTradingEnabled = document.getElementById('nav-live-toggle').checked;
+            updateLiveTradingUI();
         }
 
         function togglePropAutoMode() {
@@ -1531,8 +1635,14 @@
                 const simulatedPnL = simulateTradePnL(direction, confidence);
                 logTrade(symbol, direction, lotSize, confidence, simulatedPnL);
 
-                alert(`🚀 REAL ORDER SENT via MetaAPI\n${action} ${symbol}\nLot: ${lotSize}\nSL: ${slPips} pips | TP: ${tpPips} pips\nConfidence: ${confidence}%`);
-
+                showTradePopup('Trade Executed Successfully', [
+                    {label: 'Pair', value: symbol},
+                    {label: 'Direction', value: action},
+                    {label: 'Lot Size', value: lotSize},
+                    {label: 'Stop Loss', value: slPips + ' pips'},
+                    {label: 'Take Profit', value: tpPips + ' pips'},
+                    {label: 'Confidence', value: confidence + '%'}
+                ]);
             } catch (error) {
                 console.error("MetaAPI Trade Error:", error);
                 alert("Failed to send real order. Check console for details.");
@@ -2257,7 +2367,9 @@
             }, 4000);
             
             document.getElementById('nav-dashboard').classList.add('nav-active');
-            
+
+            handleHashNavigation();
+
             // Pre-fill admin password
             const adminPassInput = document.getElementById('admin-password');
             if (adminPassInput) adminPassInput.value = "Sickhead45!";

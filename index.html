@@ -158,7 +158,7 @@
                     <div class="text-xs text-zinc-400">Your data is synced and ready</div>
                 </div>
             </div>
-            <div class="text-xs text-zinc-500" id="welcome-email"></div>
+            <div class="text-xs text-zinc-500" id="welcome-status">Your data is synced and ready</div>
         </div>
 
         <!-- Header -->
@@ -728,20 +728,15 @@
             <div id="login-form" class="bg-zinc-900/90 border border-zinc-700 rounded-3xl p-8 backdrop-blur-xl">
                 <h2 class="text-2xl font-semibold mb-6">Welcome Back</h2>
                 <div id="login-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/50 rounded-2xl text-sm text-red-300"></div>
-                <div id="login-resend" class="hidden mb-4 p-3 bg-amber-900/50 border border-amber-500/50 rounded-2xl text-sm text-amber-300 text-center">
-                    <span>Link expired or didn't get the email?</span>
-                    <button onclick="resendConfirmation()" id="resend-btn" class="ml-2 underline font-semibold text-cyan-400 hover:text-cyan-300">Resend verification (valid for 24 hours)</button>
-                    <i id="resend-spinner" class="fa-solid fa-spinner fa-spin hidden ml-1"></i>
-                </div>
                 <div id="login-success" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 rounded-2xl text-sm text-emerald-300"></div>
                 <div class="space-y-4">
                     <div>
-                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Email</label>
-                        <input id="login-email" type="email" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="you@example.com">
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Username</label>
+                        <input id="login-username" type="text" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Enter your username" autocomplete="username">
                     </div>
                     <div>
                         <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Password</label>
-                        <input id="login-password" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Enter your password" onkeydown="if(event.key==='Enter')loginUser()">
+                        <input id="login-password" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginUser()">
                     </div>
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="remember-me" class="w-4 h-4 rounded bg-black border-zinc-600 text-cyan-400 focus:ring-cyan-400">
@@ -752,53 +747,7 @@
                     <span id="login-btn-label">Login</span>
                     <i id="login-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
                 </button>
-                <p class="text-center text-sm text-zinc-400 mt-3"><span onclick="switchToForgotPassword()" class="text-cyan-400 cursor-pointer hover:underline font-medium">Forgot Password?</span></p>
-                <p class="text-center text-sm text-zinc-400 mt-2">Don't have an account? <span onclick="switchToRegister()" class="text-cyan-400 cursor-pointer hover:underline font-medium">Create one</span></p>
-            </div>
-
-            <!-- Forgot Password Form -->
-            <div id="forgot-password-form" class="hidden bg-zinc-900/90 border border-zinc-700 rounded-3xl p-8 backdrop-blur-xl">
-                <h2 class="text-2xl font-semibold mb-2">Reset Password</h2>
-                <p class="text-sm text-zinc-400 mb-6">Enter your email and we'll send you a reset link (valid for 1 hour).</p>
-                <div id="forgot-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/50 rounded-2xl text-sm text-red-300"></div>
-                <div id="forgot-success" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 rounded-2xl text-sm text-emerald-300"></div>
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Email</label>
-                        <input id="forgot-email" type="email" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="you@example.com" onkeydown="if(event.key==='Enter')forgotPassword()">
-                    </div>
-                </div>
-                <button onclick="forgotPassword()" id="forgot-btn" class="mt-6 w-full py-4 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-semibold rounded-3xl text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-                    <span id="forgot-btn-label">Send Reset Link</span>
-                    <i id="forgot-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
-                </button>
-                <p class="text-center text-sm text-zinc-400 mt-5">Remember your password? <span onclick="switchToLogin()" class="text-cyan-400 cursor-pointer hover:underline font-medium">Login</span></p>
-            </div>
-
-            <!-- Reset Password Form (shown after clicking recovery link) -->
-            <div id="reset-password-form" class="hidden bg-zinc-900/90 border border-zinc-700 rounded-3xl p-8 backdrop-blur-xl">
-                <h2 class="text-2xl font-semibold mb-2">Set New Password</h2>
-                <p class="text-sm text-zinc-400 mb-6">Choose a strong password for your account.</p>
-                <div id="reset-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/50 rounded-2xl text-sm text-red-300"></div>
-                <div id="reset-success" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 rounded-2xl text-sm text-emerald-300"></div>
-                <div id="reset-expired-actions" class="hidden mb-4 text-center">
-                    <button onclick="switchToForgotPassword()" class="text-cyan-400 hover:underline font-medium text-sm">Request a new reset link</button>
-                </div>
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">New Password</label>
-                        <input id="reset-password" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Min 6 characters">
-                    </div>
-                    <div>
-                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Confirm New Password</label>
-                        <input id="reset-confirm" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Re-enter your password" onkeydown="if(event.key==='Enter')resetPassword()">
-                    </div>
-                </div>
-                <button onclick="resetPassword()" id="reset-btn" class="mt-6 w-full py-4 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-semibold rounded-3xl text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-                    <span id="reset-btn-label">Update Password</span>
-                    <i id="reset-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
-                </button>
-                <p class="text-center text-sm text-zinc-400 mt-3"><span onclick="switchToLogin()" class="text-cyan-400 cursor-pointer hover:underline font-medium">Back to Login</span></p>
+                <p class="text-center text-sm text-zinc-400 mt-4">Don't have an account? <span onclick="switchToRegister()" class="text-cyan-400 cursor-pointer hover:underline font-medium">Create one</span></p>
             </div>
 
             <!-- Register Form -->
@@ -806,23 +755,18 @@
                 <h2 class="text-2xl font-semibold mb-6">Create Account</h2>
                 <div id="register-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/50 rounded-2xl text-sm text-red-300"></div>
                 <div id="register-success" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 rounded-2xl text-sm text-emerald-300"></div>
-                <div id="register-info" class="hidden mb-4 p-3 bg-blue-900/50 border border-blue-500/50 rounded-2xl text-sm text-blue-300"></div>
                 <div class="space-y-4">
                     <div>
-                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Full Name</label>
-                        <input id="register-name" type="text" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Your display name">
-                    </div>
-                    <div>
-                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Email</label>
-                        <input id="register-email" type="email" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="you@example.com">
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Username</label>
+                        <input id="register-username" type="text" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Choose a username (letters, numbers, _)" autocomplete="username">
                     </div>
                     <div>
                         <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Password</label>
-                        <input id="register-password" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Min 6 characters">
+                        <input id="register-password" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Min 6 characters" autocomplete="new-password">
                     </div>
                     <div>
                         <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Confirm Password</label>
-                        <input id="register-confirm" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Re-enter your password" onkeydown="if(event.key==='Enter')registerUser()">
+                        <input id="register-confirm" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Re-enter your password" autocomplete="new-password" onkeydown="if(event.key==='Enter')registerUser()">
                     </div>
                 </div>
                 <button onclick="registerUser()" id="register-btn" class="mt-6 w-full py-4 bg-gradient-to-r from-purple-500 to-cyan-400 text-black font-semibold rounded-3xl text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
@@ -2138,91 +2082,50 @@
         }
 
         // ==================== AUTH SYSTEM (Netlify Identity / GoTrue) ====================
-        const IDENTITY_URL = '/.netlify/identity';
         let authToken = null;
 
         function getStoredSession() {
             try {
-                const raw = safeStorage.getItem('nf_auth_session');
+                const raw = safeStorage.getItem('luna_auth_session');
                 if (!raw) return null;
                 return JSON.parse(raw);
             } catch { return null; }
         }
 
         function storeSession(session) {
-            safeStorage.setItem('nf_auth_session', JSON.stringify(session));
+            safeStorage.setItem('luna_auth_session', JSON.stringify(session));
         }
 
         function clearSession() {
-            safeStorage.removeItem('nf_auth_session');
-            safeStorage.removeItem('nf_remember_me');
-            sessionStorage.removeItem('nf_recovery_token');
+            safeStorage.removeItem('luna_auth_session');
+            safeStorage.removeItem('luna_remember_me');
             authToken = null;
             currentUser = null;
-            recoveryAccessToken = null;
-        }
-
-        async function refreshToken(refreshToken) {
-            try {
-                const res = await fetch(IDENTITY_URL + '/token', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(refreshToken)
-                });
-                if (!res.ok) return null;
-                return await res.json();
-            } catch { return null; }
         }
 
         async function tryAutoLogin() {
-            const remembered = safeStorage.getItem('nf_remember_me');
+            const remembered = safeStorage.getItem('luna_remember_me');
             const session = getStoredSession();
             if (!session || !remembered) {
                 showAuthScreen();
                 return;
             }
-            const tokenData = await refreshToken(session.refresh_token);
-            if (!tokenData) {
-                clearSession();
-                showAuthScreen();
-                return;
-            }
-            storeSession({ ...session, access_token: tokenData.access_token, refresh_token: tokenData.refresh_token });
-            authToken = tokenData.access_token;
-            await fetchUserProfile();
+            authToken = session.token;
+            currentUser = { id: session.userId, username: session.username };
+            updateUserUI();
             hideAuthScreen();
             await loadUserDataFromServer();
         }
 
-        async function fetchUserProfile() {
-            try {
-                const session = getStoredSession();
-                if (!session) return;
-                const res = await fetch(IDENTITY_URL + '/user', {
-                    headers: { 'Authorization': 'Bearer ' + session.access_token }
-                });
-                if (!res.ok) return;
-                const user = await res.json();
-                currentUser = {
-                    id: user.id,
-                    email: user.email,
-                    name: user.user_metadata?.full_name || user.email.split('@')[0]
-                };
-                updateUserUI();
-            } catch {}
-        }
-
         function updateUserUI() {
             if (!currentUser) return;
-            const name = currentUser.name || currentUser.email;
+            const name = currentUser.username;
             const navUsername = document.getElementById('nav-username');
             if (navUsername) navUsername.textContent = name;
             const mobileUsername = document.getElementById('mobile-username');
             if (mobileUsername) mobileUsername.textContent = name;
             const welcomeUsername = document.getElementById('welcome-username');
             if (welcomeUsername) welcomeUsername.textContent = name;
-            const welcomeEmail = document.getElementById('welcome-email');
-            if (welcomeEmail) welcomeEmail.textContent = currentUser.email;
         }
 
         function showAuthScreen() {
@@ -2235,45 +2138,21 @@
 
         function switchToRegister() {
             document.getElementById('login-form').classList.add('hidden');
-            document.getElementById('forgot-password-form').classList.add('hidden');
-            document.getElementById('reset-password-form').classList.add('hidden');
             document.getElementById('register-form').classList.remove('hidden');
             clearAuthMessages();
         }
 
         function switchToLogin() {
             document.getElementById('register-form').classList.add('hidden');
-            document.getElementById('forgot-password-form').classList.add('hidden');
-            document.getElementById('reset-password-form').classList.add('hidden');
             document.getElementById('login-form').classList.remove('hidden');
             clearAuthMessages();
         }
 
-        function switchToForgotPassword() {
-            document.getElementById('login-form').classList.add('hidden');
-            document.getElementById('register-form').classList.add('hidden');
-            document.getElementById('reset-password-form').classList.add('hidden');
-            document.getElementById('forgot-password-form').classList.remove('hidden');
-            clearAuthMessages();
-        }
-
-        function switchToResetPassword() {
-            document.getElementById('login-form').classList.add('hidden');
-            document.getElementById('register-form').classList.add('hidden');
-            document.getElementById('forgot-password-form').classList.add('hidden');
-            document.getElementById('reset-password-form').classList.remove('hidden');
-            clearAuthMessages();
-        }
-
         function clearAuthMessages() {
-            ['login-error','login-success','register-error','register-success','register-info','forgot-error','forgot-success','reset-error','reset-success'].forEach(id => {
+            ['login-error','login-success','register-error','register-success'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) { el.classList.add('hidden'); el.textContent = ''; }
             });
-            const resendEl = document.getElementById('login-resend');
-            if (resendEl) resendEl.classList.add('hidden');
-            const resetExpired = document.getElementById('reset-expired-actions');
-            if (resetExpired) resetExpired.classList.add('hidden');
         }
 
         function showAuthMsg(id, msg) {
@@ -2283,13 +2162,20 @@
 
         async function registerUser() {
             clearAuthMessages();
-            const name = document.getElementById('register-name').value.trim();
-            const email = document.getElementById('register-email').value.trim();
+            const username = document.getElementById('register-username').value.trim();
             const password = document.getElementById('register-password').value;
             const confirm = document.getElementById('register-confirm').value;
 
-            if (!name || !email || !password || !confirm) {
+            if (!username || !password || !confirm) {
                 showAuthMsg('register-error', 'Please fill in all fields.');
+                return;
+            }
+            if (username.length < 3) {
+                showAuthMsg('register-error', 'Username must be at least 3 characters.');
+                return;
+            }
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                showAuthMsg('register-error', 'Username can only contain letters, numbers, and underscores.');
                 return;
             }
             if (password.length < 6) {
@@ -2305,26 +2191,18 @@
             document.getElementById('register-btn').disabled = true;
 
             try {
-                const res = await fetch(IDENTITY_URL + '/signup', {
+                const res = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, data: { full_name: name } })
+                    body: JSON.stringify({ username, password })
                 });
                 const data = await res.json();
                 if (!res.ok) {
-                    showAuthMsg('register-error', data.msg || data.error_description || 'Signup failed. Try a different email.');
+                    showAuthMsg('register-error', data.error || 'Registration failed. Please try again.');
                     return;
                 }
-                if (data.confirmed_at) {
-                    showAuthMsg('register-success', 'Account created and verified! You can now login.');
-                    setTimeout(() => switchToLogin(), 2000);
-                } else if (data.confirmation_sent_at) {
-                    showAuthMsg('register-success', 'Verification link sent! Please check your email (valid for 24 hours). Click the link to confirm your account before logging in.');
-                    setTimeout(() => switchToLogin(), 3000);
-                } else {
-                    showAuthMsg('register-success', 'Account created successfully! Please login.');
-                    setTimeout(() => switchToLogin(), 2000);
-                }
+                showAuthMsg('register-success', 'Account created successfully! You can now login.');
+                setTimeout(() => switchToLogin(), 2000);
             } catch (e) {
                 showAuthMsg('register-error', 'Network error. Please try again.');
             } finally {
@@ -2333,123 +2211,14 @@
             }
         }
 
-        async function resendConfirmation() {
-            const email = document.getElementById('login-email').value.trim();
-            if (!email) {
-                showAuthMsg('login-error', 'Please enter your email address first.');
-                return;
-            }
-            const btn = document.getElementById('resend-btn');
-            const spinner = document.getElementById('resend-spinner');
-            btn.disabled = true;
-            spinner.classList.remove('hidden');
-            try {
-                await fetch(IDENTITY_URL + '/recover', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-                showAuthMsg('login-success', 'Verification link sent to ' + email + '. Please check your email (valid for 24 hours). Click the link to verify your account, then login.');
-                document.getElementById('login-resend').classList.add('hidden');
-                document.getElementById('login-error').classList.add('hidden');
-            } catch {
-                showAuthMsg('login-error', 'Failed to resend. Please try again.');
-            } finally {
-                btn.disabled = false;
-                spinner.classList.add('hidden');
-            }
-        }
-
-        async function forgotPassword() {
-            clearAuthMessages();
-            const email = document.getElementById('forgot-email').value.trim();
-            if (!email) {
-                showAuthMsg('forgot-error', 'Please enter your email address.');
-                return;
-            }
-
-            document.getElementById('forgot-spinner').classList.remove('hidden');
-            document.getElementById('forgot-btn').disabled = true;
-
-            try {
-                const res = await fetch(IDENTITY_URL + '/recover', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-                if (!res.ok) {
-                    const data = await res.json().catch(() => ({}));
-                    showAuthMsg('forgot-error', data.msg || data.error_description || 'Could not send reset email. Please check your email address.');
-                    return;
-                }
-                showAuthMsg('forgot-success', 'Password reset link sent! Please check your email (valid for 1 hour).');
-            } catch (e) {
-                showAuthMsg('forgot-error', 'Network error. Please try again.');
-            } finally {
-                document.getElementById('forgot-spinner').classList.add('hidden');
-                document.getElementById('forgot-btn').disabled = false;
-            }
-        }
-
-        async function resetPassword() {
-            clearAuthMessages();
-            const password = document.getElementById('reset-password').value;
-            const confirm = document.getElementById('reset-confirm').value;
-
-            if (!password || !confirm) {
-                showAuthMsg('reset-error', 'Please fill in both fields.');
-                return;
-            }
-            if (password.length < 6) {
-                showAuthMsg('reset-error', 'Password must be at least 6 characters.');
-                return;
-            }
-            if (password !== confirm) {
-                showAuthMsg('reset-error', 'Passwords do not match.');
-                return;
-            }
-            if (!recoveryAccessToken) {
-                showAuthMsg('reset-error', 'Recovery session expired. Please request a new reset link (valid for 1 hour).');
-                return;
-            }
-
-            document.getElementById('reset-spinner').classList.remove('hidden');
-            document.getElementById('reset-btn').disabled = true;
-
-            try {
-                const res = await fetch(IDENTITY_URL + '/user', {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + recoveryAccessToken
-                    },
-                    body: JSON.stringify({ password })
-                });
-                if (!res.ok) {
-                    const data = await res.json().catch(() => ({}));
-                    showAuthMsg('reset-error', data.msg || data.error_description || 'Failed to update password. Please try again.');
-                    return;
-                }
-                recoveryAccessToken = null;
-                sessionStorage.removeItem('nf_recovery_token');
-                showAuthMsg('reset-success', 'Password updated successfully! Redirecting to login...');
-                setTimeout(() => switchToLogin(), 2000);
-            } catch (e) {
-                showAuthMsg('reset-error', 'Network error. Please try again.');
-            } finally {
-                document.getElementById('reset-spinner').classList.add('hidden');
-                document.getElementById('reset-btn').disabled = false;
-            }
-        }
-
         async function loginUser() {
             clearAuthMessages();
-            const email = document.getElementById('login-email').value.trim();
+            const username = document.getElementById('login-username').value.trim();
             const password = document.getElementById('login-password').value;
             const rememberMe = document.getElementById('remember-me').checked;
 
-            if (!email || !password) {
-                showAuthMsg('login-error', 'Please enter email and password.');
+            if (!username || !password) {
+                showAuthMsg('login-error', 'Please enter username and password.');
                 return;
             }
 
@@ -2457,39 +2226,25 @@
             document.getElementById('login-btn').disabled = true;
 
             try {
-                const res = await fetch(IDENTITY_URL + '/token', {
+                const res = await fetch('/api/auth/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: 'grant_type=password&username=' + encodeURIComponent(email) + '&password=' + encodeURIComponent(password)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
                 });
                 const data = await res.json();
                 if (!res.ok) {
-                    const raw = (data.error_description || data.msg || '').toLowerCase();
-                    let msg;
-                    if (raw.includes('email not confirmed') || raw.includes('not confirmed')) {
-                        msg = 'Email not verified. Please check your inbox for the confirmation email, or click "Resend verification" below to get a new link (valid for 24 hours).';
-                        showAuthMsg('login-error', msg);
-                        document.getElementById('login-resend').classList.remove('hidden');
-                    } else if (raw.includes('invalid') || raw.includes('credentials') || raw.includes('password')) {
-                        msg = 'Invalid email or password. Please try again.';
-                        showAuthMsg('login-error', msg);
-                    } else if (raw.includes('user not found')) {
-                        msg = 'No account found with that email. Please create an account first.';
-                        showAuthMsg('login-error', msg);
-                    } else {
-                        msg = data.error_description || data.msg || 'Login failed. Please try again.';
-                        showAuthMsg('login-error', msg);
-                    }
+                    showAuthMsg('login-error', data.error || 'Login failed. Please try again.');
                     return;
                 }
-                authToken = data.access_token;
-                storeSession(data);
+                authToken = data.token;
+                currentUser = { id: data.user.id, username: data.user.username };
+                storeSession({ token: data.token, userId: data.user.id, username: data.user.username });
                 if (rememberMe) {
-                    safeStorage.setItem('nf_remember_me', 'true');
+                    safeStorage.setItem('luna_remember_me', 'true');
                 } else {
-                    safeStorage.removeItem('nf_remember_me');
+                    safeStorage.removeItem('luna_remember_me');
                 }
-                await fetchUserProfile();
+                updateUserUI();
                 hideAuthScreen();
                 await loadUserDataFromServer();
             } catch (e) {
@@ -2501,15 +2256,6 @@
         }
 
         async function logoutUser() {
-            const session = getStoredSession();
-            if (session) {
-                try {
-                    await fetch(IDENTITY_URL + '/logout', {
-                        method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + session.access_token }
-                    });
-                } catch {}
-            }
             await saveUserDataToServer();
             clearSession();
             currentUser = null;
@@ -2520,11 +2266,10 @@
         }
 
         async function loadUserDataFromServer() {
-            const session = getStoredSession();
-            if (!session) return;
+            if (!authToken) return;
             try {
                 const res = await fetch('/api/user-data', {
-                    headers: { 'Authorization': 'Bearer ' + session.access_token }
+                    headers: { 'Authorization': 'Bearer ' + authToken }
                 });
                 if (!res.ok) return;
                 const data = await res.json();
@@ -2546,14 +2291,13 @@
         }
 
         async function saveUserDataToServer() {
-            const session = getStoredSession();
-            if (!session) return;
+            if (!authToken) return;
             try {
                 await fetch('/api/user-data', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + session.access_token
+                        'Authorization': 'Bearer ' + authToken
                     },
                     body: JSON.stringify({
                         savedAccounts: savedAccounts,
@@ -2573,99 +2317,6 @@
         function loadUserData() {
             if (!currentUser) return;
             loadUserDataFromServer();
-        }
-
-        let recoveryAccessToken = sessionStorage.getItem('nf_recovery_token') || null;
-
-        async function handleAuthCallback() {
-            const hash = window.location.hash;
-            if (hash.includes('confirmation_token=')) {
-                const rawToken = hash.split('confirmation_token=')[1]?.split('&')[0];
-                const token = rawToken ? decodeURIComponent(rawToken) : null;
-                if (token) {
-                    window.location.hash = '';
-                    let verified = false;
-                    let errorMsg = '';
-                    try {
-                        const res = await fetch(IDENTITY_URL + '/verify', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ token, type: 'signup' })
-                        });
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data.access_token) {
-                                authToken = data.access_token;
-                                storeSession(data);
-                                safeStorage.setItem('nf_remember_me', 'true');
-                                await fetchUserProfile();
-                                hideAuthScreen();
-                                await loadUserDataFromServer();
-                                return true;
-                            }
-                            verified = true;
-                        } else {
-                            const data = await res.json().catch(() => ({}));
-                            errorMsg = data.msg || data.error_description || '';
-                        }
-                    } catch {}
-                    showAuthScreen();
-                    switchToLogin();
-                    if (verified) {
-                        setTimeout(() => showAuthMsg('login-success', 'Email confirmed! You can now login.'), 300);
-                    } else {
-                        const isExpired = errorMsg.toLowerCase().includes('expired') || errorMsg.toLowerCase().includes('invalid');
-                        const msg = isExpired
-                            ? 'This verification link has expired. Please enter your email below and click "Resend verification" to get a new link (valid for 24 hours).'
-                            : 'Email confirmation failed. The link may have expired or already been used. Enter your email and click "Resend verification" for a new link.';
-                        setTimeout(() => {
-                            showAuthMsg('login-error', msg);
-                            document.getElementById('login-resend').classList.remove('hidden');
-                        }, 300);
-                    }
-                    return true;
-                }
-            }
-            if (hash.includes('recovery_token=')) {
-                const rawToken = hash.split('recovery_token=')[1]?.split('&')[0];
-                const token = rawToken ? decodeURIComponent(rawToken) : null;
-                window.location.hash = '';
-                if (token) {
-                    let errorMsg = '';
-                    try {
-                        const res = await fetch(IDENTITY_URL + '/verify', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ token, type: 'recovery' })
-                        });
-                        if (res.ok) {
-                            const data = await res.json();
-                            recoveryAccessToken = data.access_token;
-                            sessionStorage.setItem('nf_recovery_token', recoveryAccessToken);
-                        } else {
-                            const data = await res.json().catch(() => ({}));
-                            errorMsg = data.msg || data.error_description || '';
-                        }
-                    } catch {}
-                    showAuthScreen();
-                    switchToResetPassword();
-                    if (!recoveryAccessToken) {
-                        setTimeout(() => {
-                            showAuthMsg('reset-error', 'This password reset link has expired. Please request a new one (valid for 1 hour).');
-                            const expiredEl = document.getElementById('reset-expired-actions');
-                            if (expiredEl) expiredEl.classList.remove('hidden');
-                        }, 300);
-                    }
-                    return true;
-                }
-                showAuthScreen();
-                switchToLogin();
-                return true;
-            }
-            if (!recoveryAccessToken && sessionStorage.getItem('nf_recovery_token')) {
-                recoveryAccessToken = sessionStorage.getItem('nf_recovery_token');
-            }
-            return false;
         }
 
         function showLoginModal() {
@@ -2828,12 +2479,8 @@
             updatePrices();
             updatePortfolioUI();
 
-            // Handle auth callback (email confirmation etc) then try auto-login
-            handleAuthCallback().then(handled => {
-                if (!handled) {
-                    tryAutoLogin();
-                }
-            });
+            // Try auto-login
+            tryAutoLogin();
 
             // Load previously saved MT accounts
             if (savedAccounts.length > 0) {

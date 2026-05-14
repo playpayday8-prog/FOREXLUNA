@@ -747,7 +747,49 @@
                     <span id="login-btn-label">Login</span>
                     <i id="login-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
                 </button>
-                <p class="text-center text-sm text-zinc-400 mt-5">Don't have an account? <span onclick="switchToRegister()" class="text-cyan-400 cursor-pointer hover:underline font-medium">Create one</span></p>
+                <p class="text-center text-sm text-zinc-400 mt-3"><span onclick="switchToForgotPassword()" class="text-cyan-400 cursor-pointer hover:underline font-medium">Forgot Password?</span></p>
+                <p class="text-center text-sm text-zinc-400 mt-2">Don't have an account? <span onclick="switchToRegister()" class="text-cyan-400 cursor-pointer hover:underline font-medium">Create one</span></p>
+            </div>
+
+            <!-- Forgot Password Form -->
+            <div id="forgot-password-form" class="hidden bg-zinc-900/90 border border-zinc-700 rounded-3xl p-8 backdrop-blur-xl">
+                <h2 class="text-2xl font-semibold mb-2">Reset Password</h2>
+                <p class="text-sm text-zinc-400 mb-6">Enter your email and we'll send you a reset link.</p>
+                <div id="forgot-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/50 rounded-2xl text-sm text-red-300"></div>
+                <div id="forgot-success" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 rounded-2xl text-sm text-emerald-300"></div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Email</label>
+                        <input id="forgot-email" type="email" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="you@example.com" onkeydown="if(event.key==='Enter')forgotPassword()">
+                    </div>
+                </div>
+                <button onclick="forgotPassword()" id="forgot-btn" class="mt-6 w-full py-4 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-semibold rounded-3xl text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                    <span id="forgot-btn-label">Send Reset Link</span>
+                    <i id="forgot-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+                </button>
+                <p class="text-center text-sm text-zinc-400 mt-5">Remember your password? <span onclick="switchToLogin()" class="text-cyan-400 cursor-pointer hover:underline font-medium">Login</span></p>
+            </div>
+
+            <!-- Reset Password Form (shown after clicking recovery link) -->
+            <div id="reset-password-form" class="hidden bg-zinc-900/90 border border-zinc-700 rounded-3xl p-8 backdrop-blur-xl">
+                <h2 class="text-2xl font-semibold mb-2">Set New Password</h2>
+                <p class="text-sm text-zinc-400 mb-6">Choose a strong password for your account.</p>
+                <div id="reset-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/50 rounded-2xl text-sm text-red-300"></div>
+                <div id="reset-success" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 rounded-2xl text-sm text-emerald-300"></div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">New Password</label>
+                        <input id="reset-password" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Min 6 characters">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Confirm New Password</label>
+                        <input id="reset-confirm" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Re-enter your password" onkeydown="if(event.key==='Enter')resetPassword()">
+                    </div>
+                </div>
+                <button onclick="resetPassword()" id="reset-btn" class="mt-6 w-full py-4 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-semibold rounded-3xl text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                    <span id="reset-btn-label">Update Password</span>
+                    <i id="reset-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+                </button>
             </div>
 
             <!-- Register Form -->
@@ -2181,18 +2223,38 @@
 
         function switchToRegister() {
             document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('forgot-password-form').classList.add('hidden');
+            document.getElementById('reset-password-form').classList.add('hidden');
             document.getElementById('register-form').classList.remove('hidden');
             clearAuthMessages();
         }
 
         function switchToLogin() {
             document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('forgot-password-form').classList.add('hidden');
+            document.getElementById('reset-password-form').classList.add('hidden');
             document.getElementById('login-form').classList.remove('hidden');
             clearAuthMessages();
         }
 
+        function switchToForgotPassword() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('reset-password-form').classList.add('hidden');
+            document.getElementById('forgot-password-form').classList.remove('hidden');
+            clearAuthMessages();
+        }
+
+        function switchToResetPassword() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('forgot-password-form').classList.add('hidden');
+            document.getElementById('reset-password-form').classList.remove('hidden');
+            clearAuthMessages();
+        }
+
         function clearAuthMessages() {
-            ['login-error','login-success','register-error','register-success'].forEach(id => {
+            ['login-error','login-success','register-error','register-success','forgot-error','forgot-success','reset-error','reset-success'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) { el.classList.add('hidden'); el.textContent = ''; }
             });
@@ -2251,6 +2313,87 @@
             }
         }
 
+        async function forgotPassword() {
+            clearAuthMessages();
+            const email = document.getElementById('forgot-email').value.trim();
+            if (!email) {
+                showAuthMsg('forgot-error', 'Please enter your email address.');
+                return;
+            }
+
+            document.getElementById('forgot-spinner').classList.remove('hidden');
+            document.getElementById('forgot-btn').disabled = true;
+
+            try {
+                const res = await fetch(IDENTITY_URL + '/recover', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    showAuthMsg('forgot-error', data.msg || data.error_description || 'Could not send reset email. Please check your email address.');
+                    return;
+                }
+                showAuthMsg('forgot-success', 'Password reset link sent! Check your email inbox.');
+            } catch (e) {
+                showAuthMsg('forgot-error', 'Network error. Please try again.');
+            } finally {
+                document.getElementById('forgot-spinner').classList.add('hidden');
+                document.getElementById('forgot-btn').disabled = false;
+            }
+        }
+
+        async function resetPassword() {
+            clearAuthMessages();
+            const password = document.getElementById('reset-password').value;
+            const confirm = document.getElementById('reset-confirm').value;
+
+            if (!password || !confirm) {
+                showAuthMsg('reset-error', 'Please fill in both fields.');
+                return;
+            }
+            if (password.length < 6) {
+                showAuthMsg('reset-error', 'Password must be at least 6 characters.');
+                return;
+            }
+            if (password !== confirm) {
+                showAuthMsg('reset-error', 'Passwords do not match.');
+                return;
+            }
+            if (!recoveryAccessToken) {
+                showAuthMsg('reset-error', 'Recovery session expired. Please request a new reset link.');
+                return;
+            }
+
+            document.getElementById('reset-spinner').classList.remove('hidden');
+            document.getElementById('reset-btn').disabled = true;
+
+            try {
+                const res = await fetch(IDENTITY_URL + '/user', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + recoveryAccessToken
+                    },
+                    body: JSON.stringify({ password })
+                });
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    showAuthMsg('reset-error', data.msg || data.error_description || 'Failed to update password. Please try again.');
+                    return;
+                }
+                recoveryAccessToken = null;
+                showAuthMsg('reset-success', 'Password updated successfully!');
+                setTimeout(() => switchToLogin(), 2000);
+            } catch (e) {
+                showAuthMsg('reset-error', 'Network error. Please try again.');
+            } finally {
+                document.getElementById('reset-spinner').classList.add('hidden');
+                document.getElementById('reset-btn').disabled = false;
+            }
+        }
+
         async function loginUser() {
             clearAuthMessages();
             const email = document.getElementById('login-email').value.trim();
@@ -2273,7 +2416,17 @@
                 });
                 const data = await res.json();
                 if (!res.ok) {
-                    const msg = data.error_description || data.msg || 'Invalid email or password.';
+                    const raw = (data.error_description || data.msg || '').toLowerCase();
+                    let msg;
+                    if (raw.includes('email not confirmed') || raw.includes('not confirmed')) {
+                        msg = 'Email not verified. Please check your inbox for the confirmation email.';
+                    } else if (raw.includes('invalid') || raw.includes('credentials') || raw.includes('password')) {
+                        msg = 'Invalid email or password. Please try again.';
+                    } else if (raw.includes('user not found')) {
+                        msg = 'No account found with that email. Please create an account first.';
+                    } else {
+                        msg = data.error_description || data.msg || 'Login failed. Please try again.';
+                    }
                     showAuthMsg('login-error', msg);
                     return;
                 }
@@ -2281,6 +2434,8 @@
                 storeSession(data);
                 if (rememberMe) {
                     safeStorage.setItem('nf_remember_me', 'true');
+                } else {
+                    safeStorage.removeItem('nf_remember_me');
                 }
                 await fetchUserProfile();
                 hideAuthScreen();
@@ -2368,19 +2523,33 @@
             loadUserDataFromServer();
         }
 
+        let recoveryAccessToken = null;
+
         async function handleAuthCallback() {
             const hash = window.location.hash;
             if (hash.includes('confirmation_token=')) {
                 const token = hash.split('confirmation_token=')[1]?.split('&')[0];
                 if (token) {
+                    window.location.hash = '';
                     try {
-                        await fetch(IDENTITY_URL + '/verify', {
+                        const res = await fetch(IDENTITY_URL + '/verify', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ token, type: 'signup' })
                         });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.access_token) {
+                                authToken = data.access_token;
+                                storeSession(data);
+                                safeStorage.setItem('nf_remember_me', 'true');
+                                await fetchUserProfile();
+                                hideAuthScreen();
+                                await loadUserDataFromServer();
+                                return true;
+                            }
+                        }
                     } catch {}
-                    window.location.hash = '';
                     showAuthScreen();
                     switchToLogin();
                     setTimeout(() => showAuthMsg('login-success', 'Email confirmed! You can now login.'), 300);
@@ -2388,7 +2557,27 @@
                 }
             }
             if (hash.includes('recovery_token=')) {
+                const token = hash.split('recovery_token=')[1]?.split('&')[0];
                 window.location.hash = '';
+                if (token) {
+                    try {
+                        const res = await fetch(IDENTITY_URL + '/verify', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ token, type: 'recovery' })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            recoveryAccessToken = data.access_token;
+                        }
+                    } catch {}
+                    showAuthScreen();
+                    switchToResetPassword();
+                    if (!recoveryAccessToken) {
+                        setTimeout(() => showAuthMsg('reset-error', 'Recovery link has expired. Please request a new one.'), 300);
+                    }
+                    return true;
+                }
                 showAuthScreen();
                 switchToLogin();
                 return true;

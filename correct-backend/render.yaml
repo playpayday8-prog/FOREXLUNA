@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: forex-luna-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: WEBHOOK_SECRET
+        sync: false

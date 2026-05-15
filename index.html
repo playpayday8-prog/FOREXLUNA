@@ -34,18 +34,18 @@
 
         /* Trade confirmation popup */
         .trade-popup-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99999;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.32); z-index: 99999;
             display: flex; align-items: center; justify-content: center;
             animation: fadeIn 0.2s ease;
         }
         .trade-popup {
-            background: rgba(24,24,27,0.97); border: 1px solid #22c55e; border-radius: 1rem;
-            padding: 1rem 1.25rem; max-width: 340px; width: 90%; position: relative;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            background: rgba(24,24,27,0.98); border: 1px solid #ef4444; border-radius: 0.75rem;
+            padding: 0.75rem 0.9rem; max-width: 280px; width: calc(100% - 2rem); position: relative;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.45);
         }
         .trade-popup-close {
-            position: absolute; top: 0.5rem; right: 0.75rem; background: none; border: none;
-            color: #a1a1aa; font-size: 1.1rem; cursor: pointer; line-height: 1;
+            position: absolute; top: 0.4rem; right: 0.6rem; background: none; border: none;
+            color: #a1a1aa; font-size: 1rem; cursor: pointer; line-height: 1;
         }
         .trade-popup-close:hover { color: #fff; }
     </style>
@@ -100,11 +100,14 @@
                         <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
                     </label>
                 </div>
-                <div class="hidden sm:flex items-center gap-2 bg-zinc-900 border border-red-500/30 rounded-3xl px-3 py-1">
-                    <span id="live-mode-label" class="text-xs text-zinc-400">DEMO MODE</span>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="nav-live-toggle" class="sr-only peer" onchange="toggleLiveTradingFromNav()">
-                        <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
+                <div class="hidden sm:flex items-center gap-2 bg-red-950/80 border border-red-500/60 rounded-3xl px-3 py-1">
+                    <span id="live-mode-label" class="text-xs text-red-300 font-semibold">🔴 LIVE TRADING - REAL MONEY ONLY</span>
+                </div>
+                <div class="hidden sm:flex items-center gap-2 bg-zinc-900 rounded-3xl px-3 py-1">
+                    <span class="text-xs text-zinc-400">POPUPS</span>
+                    <label class="relative inline-flex items-center cursor-pointer" title="Show Trade Popups">
+                        <input type="checkbox" id="show-trade-popups-toggle" class="sr-only peer" onchange="toggleTradePopups()">
+                        <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
                     </label>
                 </div>
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl p-2"><i id="hamburger-icon" class="fa-solid fa-bars"></i></button>
@@ -113,7 +116,10 @@
     </nav>
 
     <div id="auto-banner" class="hidden bg-emerald-900/80 border-b border-emerald-400 text-center py-2 text-sm">
-        <span class="font-semibold text-emerald-400">🤖 AUTO MODE ACTIVE</span> — Scanning & executing high-confidence signals automatically
+        <span class="font-semibold text-emerald-400">AUTO MODE ACTIVE</span> - Scanning for 85%+ live-only trade setups
+    </div>
+    <div id="live-only-banner" class="bg-red-950/90 border-b border-red-500/60 text-center py-2 text-sm font-semibold text-red-200">
+        🔴 LIVE TRADING - REAL MONEY ONLY
     </div>
 
     <!-- Mobile Menu -->
@@ -130,10 +136,13 @@
             <div onclick="navigateTo('status')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-info-circle w-5"></i><span>Platform Status</span></div>
             <div onclick="navigateTo('settings')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-cog w-5"></i><span>Settings</span></div>
             <div class="flex items-center justify-between py-3 border-b border-zinc-700">
-                <div class="flex items-center gap-3"><i class="fa-solid fa-exclamation-triangle w-5 text-red-400"></i><span id="mobile-live-label" class="text-sm">DEMO MODE</span></div>
+                <div class="flex items-center gap-3"><i class="fa-solid fa-exclamation-triangle w-5 text-red-400"></i><span id="mobile-live-label" class="text-sm text-red-400 font-semibold">LIVE TRADING - REAL MONEY ONLY</span></div>
+            </div>
+            <div class="flex items-center justify-between py-3 border-b border-zinc-700">
+                <div class="flex items-center gap-3"><i class="fa-solid fa-bell w-5 text-zinc-400"></i><span class="text-sm">Show Trade Popups</span></div>
                 <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="mobile-live-toggle" class="sr-only peer" onchange="liveTradingEnabled=this.checked;updateLiveTradingUI();">
-                    <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
+                    <input type="checkbox" id="mobile-show-trade-popups-toggle" class="sr-only peer" onchange="toggleTradePopupsFromMobile()">
+                    <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
                 </label>
             </div>
             <div class="flex items-center gap-3 py-3 border-b border-zinc-700" id="mobile-user-item">
@@ -315,26 +324,13 @@
         </div>
 
         <!-- Live Trading Mode -->
-        <div class="max-w-2xl mx-auto mt-6 bg-zinc-900 border border-red-500/50 rounded-3xl p-6">
-            <div class="flex items-center justify-between">
+        <div class="max-w-2xl mx-auto mt-6 bg-red-950/70 border border-red-500/60 rounded-3xl p-6">
+            <div class="flex items-start gap-3">
+                <i class="fa-solid fa-exclamation-triangle text-red-400 mt-1"></i>
                 <div>
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-exclamation-triangle text-red-400"></i>
-                        <span class="font-semibold text-red-400">LIVE TRADING MODE</span>
-                    </div>
-                    <p class="text-xs text-zinc-400 mt-1">Toggle between <span class="text-zinc-300 font-medium">DEMO MODE</span> and <span class="text-red-400 font-medium">LIVE TRADING MODE</span></p>
+                    <div class="font-semibold text-red-300">🔴 LIVE TRADING - REAL MONEY ONLY</div>
+                    <p class="text-xs text-red-100/80 mt-1">Demo execution has been removed. Trades require a connected real MT4/MT5 or prop firm account, a MetaAPI token, at least 85% confidence, and a 15 minute cooldown between orders.</p>
                 </div>
-                <div class="flex items-center gap-3">
-                    <span class="text-xs text-zinc-500">DEMO</span>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="live-trading-toggle" class="sr-only peer" onchange="toggleLiveTrading()">
-                        <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
-                    </label>
-                    <span class="text-xs text-red-400">LIVE</span>
-                </div>
-            </div>
-            <div id="live-warning" class="hidden mt-4 text-xs bg-red-950 border border-red-500/30 rounded-2xl p-3 text-red-300">
-                ⚠️ <strong>Warning:</strong> Live trading is enabled. All trades will be executed on your real Prop Firm account. Use with caution.
             </div>
         </div>
     </div>
@@ -457,17 +453,15 @@
                         <div class="mb-3">
                             <label class="text-xs text-zinc-400 block mb-1">Signal Scan Mode</label>
                             <select id="prop-signal-mode" onchange="applySignalMode()" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-2.5 text-sm font-medium">
-                                <option value="aggressive">Aggressive (Fast execution, lower confidence)</option>
-                                <option value="medium">Medium (Balanced)</option>
-                                <option value="normal" selected>Normal (Recommended)</option>
-                                <option value="conservative">Conservative (High confidence, safer)</option>
+                                <option value="normal" selected>Live Standard (85% minimum)</option>
+                                <option value="conservative">Live Conservative (90% minimum)</option>
                             </select>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="text-xs text-zinc-400">Min Confidence %</label>
-                                <input id="prop-min-confidence" type="number" value="78" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-2 text-sm font-mono" onchange="updatePropSettings()">
+                                <input id="prop-min-confidence" type="number" value="85" min="85" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-2 text-sm font-mono" onchange="updatePropSettings()">
                             </div>
                             <div>
                                 <label class="text-xs text-zinc-400">Max Risk / Trade %</label>
@@ -810,6 +804,8 @@
             }
         };
 
+        const MIN_TRADE_CONFIDENCE = 85;
+        const MIN_TRADE_INTERVAL_MS = 15 * 60 * 1000;
         let autoTradeEnabled = false;
         let isAdminLoggedIn = false;
         let currentAdminPassword = "Sickhead45!";
@@ -822,6 +818,8 @@
         let currentUser = null;
         let accountBalance = 124850;
         let metaToken = safeStorage.getItem('meta_token') || "";
+        let showTradePopups = safeStorage.getItem('show_trade_popups') === 'true';
+        let lastTradeAt = parseInt(safeStorage.getItem('last_trade_at') || '0', 10) || 0;
 
         // Prop Firm Challenge State
         let propSettings = {
@@ -830,11 +828,11 @@
             profitTarget: 10,
             maxDailyDrawdown: 5,
             maxOverallDrawdown: 12,
-            minConfidence: 78,
+            minConfidence: MIN_TRADE_CONFIDENCE,
             maxRiskPerTrade: 1.0
         };
         let propAutoMode = false;
-        let liveTradingEnabled = false;
+        let liveTradingEnabled = true;
         let safeModeEnabled = false;      // Institutional Safe Mode (strict)
         let defaultTakeProfitPips = 80;
         let defaultStopLossPips = 50;
@@ -849,10 +847,6 @@
             dailyPnL: 0
         };
 
-        // ⚠️ HARDCODED METAAPI TOKEN (for convenience)
-        // This token is now pre-loaded automatically.
-        // DO NOT share this file with the token inside.
-        const HARDCODED_META_TOKEN = "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI3MTM1ZGFiNDdkNDNiODExYjM4NTdmNDY5MTVkMDU1MCIsImFjY2Vzc1J1bGVzIjpbeyJpZCI6InRyYWRpbmctYWNjb3VudC1tYW5hZ2VtZW50LWFwaSIsIm1ldGhvZHMiOlsidHJhZGluZy1hY2NvdW50LW1hbmFnZW1lbnQtYXBpOnJlc3Q6cHVibGljOio6KiJdLCJyb2xlcyI6WyJyZWFkZXIiLCJ3cml0ZXIiXSwicmVzb3VyY2VzIjpbIio6JFVTRVJfSUQkOioiXX0seyJpZCI6Im1ldGFhcGktcmVzdC1hcGkiLCJtZXRob2RzIjpbIm1ldGFhcGktYXBpOnJlc3Q6cHVibGljOio6KiJdLCJyb2xlcyI6WyJyZWFkZXIiLCJ3cml0ZXIiXSwicmVzb3VyY2VzIjpbIio6JFVTRVJfSUQkOioiXX0seyJpZCI6Im1ldGFhcGktcnBjLWFwaSIsIm1ldGhvZHMiOlsibWV0YWFwaS1hcGk6d3M6cHVibGljOio6KiJdLCJyb2xlcyI6WyJyZWFkZXIiLCJ3cml0ZXIiXSwicmVzb3VyY2VzIjpbIio6JFVTRVJfSUQkOioiXX0seyJpZCI6Im1ldGFhcGktcmVhbC10aW1lLXN0cmVhbWluZy1hcGkiLCJtZXRob2RzIjpbIm1ldGFhcGktLWFwaTp3czpwdWJsaWM6KjoqIl0sInJvbGVzIjpbInJlYWRlciIsIndyaXRlciJdLCJyZXNvdXJjZXMiOlsiKjokVVNFUl9JRCQ6KiJdfSx7ImlkIjoibWV0YXN0YXRzLWFwaSIsIm1ldGhvZHMiOlsibWV0YXN0YXRzLWFwaTpyZXN0OnB1YmxpYzoqOioiXSwicm9sZXMiOlsicmVhZGVyIiwid3JpdGVyIl0sInJlc291cmNlcyI6WyIqOiRVU0VSX0lEJDoqIl19LHsiaWQiOiJyaXNrLW1hbmFnZW1lbnQtYXBpIiwibWV0aG9kcyI6WyJyaXNrLW1hbmFnZW1lbnQtYXBpOnJlc3Q6cHVibGljOio6KiJdLCJyb2xlcyI6WyJyZWFkZXIiLCJ3cml0ZXIiXSwicmVzb3VyY2VzIjpbIio6JFVTRVJfSUQkOioiXX0seyJpZCI6ImNvcHlmYWN0b3J5LWFwaSIsIm1ldGhvZHMiOlsid29weWZhY3RvcnktYXBpOnJlc3Q6cHVibGljOio6KiJdLCJyb2xlcyI6WyJyZWFkZXIiLCJ3cml0ZXIiXSwicmVzb3VyY2VzIjpbIio6JFVTRVJfSUQkOioiXX0seyJpZCI6Im10LW1hbmFnZXItYXBpIiwibWV0aG9kcyI6WyJtdC1tYW5hZ2VyLWFwaTpyZXN0OmRlYWxpbmc6KjoqIiwibXQtbWFuYWdlci1hcGk6cmVzdDpwdWJsaWM6KjoqIl0sInJvbGVzIjpbInJlYWRlciIsIndyaXRlciJdLCJyZXNvdXJjZXMiOlsiKjokVVNFUl9JRCQ6KiJdfSx7ImlkIjoiYmlsbGluZy1hcGkiLCJtZXRob2RzIjpbImJpbGxpbmctYXBpOnJlc3Q6cHVibGljOio6KiJdLCJyb2xlcyI6WyJyZWFkZXIiXSwicmVzb3VyY2VzIjpbIio6JFVTRVJfSUQkOioiXX1dLCJpZ25vcmVSYXRlTGltaXRzIjpmYWxzZSwidG9rZW5JZCI6IjIwMjEwMjEzIiwiaW1wZXJzb25hdGVkIjpmYWxzZSwicmVhbFVzZXJJZCI6IjcxMzVkYWI0N2Q0M2I4MTFiMzg1N2Y0NjkxNWQwNTUwIiwiaWF0IjoxNzc4NzAzNDg5fQ.NdfAW-RQ_J7Pdd0b6N-DZGAF5FWTLlIRWfrTOtxVoAQY556UmcqDioUn5__wFVuCLB908xLo-wjC4O4p3QjIGViAkfZubgJMhll3g8pt82KkcbafTZfH5OLXJYhpvB0J1WSANPhdf81PCcftQsuu8zCB4n3eN0Pco34T2raH4ZcwkbMTvrbN7qvNdEFmYs9rl84DXmKpSCJ1Ku_LjON8BMY-qiJjctxHYRSH69PBvpeTHDcUo9Nw1240_aB9SQsXRQC7OUl0lWo9jIzYwP7p9ehEWM7sKA8BgLF-PIFF0e8JglDmeC8gB0u3mROBDy8BdDYli_0HEyRIZw7UXorENo5K5EWb0cndroPdOK0CFsCcnXmoaLYUPvwoCcC173FbeFxcv7Y_QpRaeSB1vyOu-CkXGgMfU9YTUyhCgZY-XG-kBMvrpwpzKpk25o-xn-cn7CJ2xrjRDnq2MUOAxH6q8wvaMy7lLUfFsb-_bmHHwADOuCrMpTw-YLWd3yDhah57Ya1RkZpERjIBvGF9NciiRhg1O8NA8vx38g_LgekGdo2p260xVtMkRrxGHZpMF-VAnKWKpQitZGzC5KE4JUwdNJ-w_AIzfrIKMFDvnK6P9VMR2c3ppakyu822CDOuKkRa1f5rOtbR_Xgsugiz3yI2AJJ2NW9kNplpEqBHm-uyHWc";
         let priceChart = null;
         let currentChartSymbol = 'EURUSD';
         
@@ -975,17 +969,17 @@
                 
                 let statusHTML = `<span class="text-xs text-zinc-400">Analyzed</span>`;
                 
-                if (signal.score > 80 && autoTradeEnabled && connectedAccount) {
+                if (signal.score >= MIN_TRADE_CONFIDENCE && autoTradeEnabled && connectedAccount) {
                     statusHTML = `<span class="text-xs text-emerald-400 font-bold">✅ EXECUTED</span>`;
                     executeTradeAuto(pair.symbol, signal.direction, signal.score);
-                } else if (signal.score > 75) {
+                } else if (signal.score >= MIN_TRADE_CONFIDENCE) {
                     statusHTML = `<span class="text-xs text-amber-400">Ready</span>`;
                 }
                 
                 row.innerHTML = `
                     <td class="p-4 font-mono font-bold">${pair.symbol}</td>
                     <td class="p-4 font-mono">${signal.price.toFixed(pair.symbol.includes('JPY') ? 2 : 4)}</td>
-                    <td class="p-4"><span class="inline-block px-3 py-1 rounded-2xl text-xs font-bold ${signal.score > 75 ? 'bg-emerald-400 text-black' : signal.score > 60 ? 'bg-amber-400 text-black' : 'bg-zinc-400 text-black'}"> ${signal.score}%</span></td>
+                    <td class="p-4"><span class="inline-block px-3 py-1 rounded-2xl text-xs font-bold ${signal.score >= MIN_TRADE_CONFIDENCE ? 'bg-emerald-400 text-black' : signal.score > 60 ? 'bg-amber-400 text-black' : 'bg-zinc-400 text-black'}"> ${signal.score}%</span></td>
                     <td class="p-4"><span class="px-4 py-1 rounded-3xl text-xs font-bold ${signal.direction === 'BUY' ? 'bg-emerald-500' : signal.direction === 'SELL' ? 'bg-red-500' : 'bg-zinc-500'}"> ${signal.direction}</span></td>
                     <td class="p-4 text-xs text-zinc-400">${signal.reason}</td>
                     <td class="p-4 text-right">${statusHTML}</td>
@@ -1016,7 +1010,7 @@
                             <div class="font-mono">${signal.score}%</div>
                         </div>
                         <div class="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                            <div class="h-2 ${signal.score > 75 ? 'bg-emerald-400' : 'bg-amber-400'}" style="width: ${signal.score}%"></div>
+                            <div class="h-2 ${signal.score >= MIN_TRADE_CONFIDENCE ? 'bg-emerald-400' : 'bg-amber-400'}" style="width: ${signal.score}%"></div>
                         </div>
                     </div>
                     <div class="mt-6 grid grid-cols-3 gap-4 text-sm">
@@ -1026,7 +1020,7 @@
                     </div>
                     <div class="mt-6 flex gap-3">
                         <button onclick="executeTrade('${pair.symbol}', ' ${signal.direction}', ${signal.score})" class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 rounded-3xl font-semibold text-sm">AUTO EXECUTE</button>
-                        <button onclick="manualTrade('${pair.symbol}', ' ${signal.direction}')" class="flex-1 py-4 border border-zinc-600 hover:bg-zinc-800 rounded-3xl font-semibold text-sm">MANUAL</button>
+                        <button onclick="manualTrade('${pair.symbol}', ' ${signal.direction}', ${signal.score})" class="flex-1 py-4 border border-zinc-600 hover:bg-zinc-800 rounded-3xl font-semibold text-sm">MANUAL</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -1067,75 +1061,44 @@
             });
         }
 
+        function getTradeGateFailure(confidence) {
+            if (!connectedAccount) return "Please connect your real MT4/MT5 or prop firm account first.";
+            if (!metaToken) return "MetaAPI token is required before live trading can execute.";
+            if (confidence < MIN_TRADE_CONFIDENCE) return `Trade blocked: confidence must be at least ${MIN_TRADE_CONFIDENCE}%.`;
+            const waitRemaining = MIN_TRADE_INTERVAL_MS - (Date.now() - lastTradeAt);
+            if (waitRemaining > 0) {
+                const minutes = Math.ceil(waitRemaining / 60000);
+                return `Trade blocked: wait ${minutes} more minute${minutes === 1 ? '' : 's'} before the next order.`;
+            }
+            return null;
+        }
+
+        function markTradeAttempt() {
+            lastTradeAt = Date.now();
+            safeStorage.setItem('last_trade_at', String(lastTradeAt));
+        }
+
         function executeTrade(pair, direction, confidence) {
-            if (!connectedAccount) {
-                alert("❌ Please connect your MT4/MT5 account first in the Accounts section");
-                navigateTo('accounts');
+            direction = String(direction || '').trim();
+            const gateFailure = getTradeGateFailure(confidence);
+            if (gateFailure) {
+                showErrorToast(gateFailure);
+                if (!connectedAccount) navigateTo('accounts');
                 return;
             }
-            
             const lotSize = calculateLotSize(confidence, pair);
-            const slPips = defaultStopLossPips;
-            const tpPips = defaultTakeProfitPips;
-
-            if (liveTradingEnabled && metaToken) {
-                // REAL TRADE EXECUTION
-                executeRealMetaAPITrade(pair, direction, lotSize, slPips, tpPips, confidence);
-            } else {
-                // Simulation mode
-                const pnl = simulateTradePnL(direction, confidence);
-                logTrade(pair, direction, lotSize, confidence, pnl);
-                
-                const isAuto = confidence > 80 && autoTradeEnabled;
-                showTradePopup(isAuto ? 'Auto Trade Executed (Simulated)' : 'Trade Executed Successfully', [
-                    {label: 'Pair', value: pair},
-                    {label: 'Direction', value: direction},
-                    {label: 'Lot Size', value: lotSize},
-                    {label: 'Stop Loss', value: slPips + ' pips'},
-                    {label: 'Take Profit', value: tpPips + ' pips'},
-                    {label: 'Confidence', value: confidence + '%'}
-                ]);
-            }
+            executeRealMetaAPITrade(pair, direction, lotSize, defaultStopLossPips, defaultTakeProfitPips, confidence);
         }
 
         function executeTradeAuto(pair, direction, confidence) {
-            if (!connectedAccount) return;
+            direction = String(direction || '').trim();
+            if (getTradeGateFailure(confidence)) return;
             const lotSize = calculateLotSize(confidence, pair);
-            const slPips = defaultStopLossPips;
-            const tpPips = defaultTakeProfitPips;
-
-            if (liveTradingEnabled && metaToken) {
-                executeRealMetaAPITrade(pair, direction, lotSize, slPips, tpPips, confidence);
-            } else {
-                const pnl = simulateTradePnL(direction, confidence);
-                logTrade(pair, direction, lotSize, confidence, pnl);
-                console.log(`🤖 AUTO EXECUTED (SIM): ${direction} ${pair} | Lot: ${lotSize} | PnL: $${pnl} | Conf: ${confidence}%`);
-            }
+            executeRealMetaAPITrade(pair, direction, lotSize, defaultStopLossPips, defaultTakeProfitPips, confidence);
         }
 
-        function manualTrade(pair, direction) {
-            if (!connectedAccount) {
-                alert("❌ Please connect your MT4/MT5 account first");
-                navigateTo('accounts');
-                return;
-            }
-            const pnl = simulateTradePnL(direction, 65);
-            logTrade(pair, direction, 0.5, 65, pnl);
-            showTradePopup('Trade Executed Successfully', [
-                {label: 'Pair', value: pair},
-                {label: 'Direction', value: direction},
-                {label: 'Lot Size', value: '0.5'},
-                {label: 'Confidence', value: '65%'},
-                {label: 'Simulated PnL', value: '$' + pnl}
-            ]);
-        }
-
-        function simulateTradePnL(direction, confidence) {
-            const base = (confidence - 50) * 2.8; // higher confidence = better expected outcome
-            const variance = (Math.random() - 0.4) * 45;
-            let pnl = Math.round(base + variance);
-            if (direction === "SELL") pnl = Math.round(pnl * 0.9); // slightly lower on sells for demo
-            return pnl;
+        function manualTrade(pair, direction, confidence) {
+            executeTrade(pair, direction, confidence);
         }
 
         function logTrade(pair, direction, lotSize, confidence, pnl) {
@@ -1157,8 +1120,8 @@
             // Update Prop Firm Challenge progress
             updatePropProgress(pnl);
             
-            const tradeType = liveTradingEnabled ? "REAL" : "SIM";
-            console.log(`%c[${tradeType} Trade] ${direction} ${pair} | Lot: ${lotSize} | PnL: $${pnl} | Conf: ${confidence}%`, liveTradingEnabled ? 'color:#22c55e' : 'color:#64748b');
+            const tradeType = "REAL";
+            console.log(`%c[${tradeType} Trade] ${direction} ${pair} | Lot: ${lotSize} | PnL: $${pnl} | Conf: ${confidence}%`, 'color:#22c55e');
 
             // Update visible trade log
             updateTradeLog();
@@ -1194,12 +1157,12 @@
             }
 
             tbody.innerHTML = tradeHistory.map(trade => {
-                const isReal = liveTradingEnabled;
+                const isReal = true;
                 const pnlColor = trade.pnl >= 0 ? 'text-emerald-400' : 'text-red-400';
                 return `
                     <tr class="border-b border-zinc-800 hover:bg-zinc-950">
                         <td class="py-3 px-4 text-xs text-zinc-400">${trade.time || '-'}</td>
-                        <td class="py-3 px-4"><span class="px-2 py-0.5 text-[10px] rounded ${isReal ? 'bg-red-500/20 text-red-400' : 'bg-zinc-600 text-zinc-300'}">${isReal ? 'REAL' : 'SIM'}</span></td>
+                        <td class="py-3 px-4"><span class="px-2 py-0.5 text-[10px] rounded bg-red-500/20 text-red-400">REAL</span></td>
                         <td class="py-3 px-4 font-bold">${trade.pair}</td>
                         <td class="py-3 px-4"><span class="${trade.direction === 'BUY' ? 'text-emerald-400' : 'text-red-400'}">${trade.direction}</span></td>
                         <td class="py-3 px-4 text-right">${trade.lotSize}</td>
@@ -1218,12 +1181,12 @@
                     container.innerHTML = `<div class="text-zinc-500 text-xs">No trades yet...</div>`;
                 } else {
                     container.innerHTML = tradeHistory.slice(0, 8).map(trade => {
-                        const isReal = liveTradingEnabled;
+                        const isReal = true;
                         const color = trade.pnl > 0 ? 'text-emerald-400' : 'text-red-400';
                         return `
                             <div class="flex justify-between items-center bg-zinc-950/60 px-3 py-1.5 rounded-xl text-xs">
                                 <div class="flex items-center gap-2">
-                                    <span class="${isReal ? 'text-red-400' : 'text-zinc-400'}">${isReal ? 'REAL' : 'SIM'}</span>
+                                    <span class="text-red-400">REAL</span>
                                     <span class="font-bold">${trade.direction} ${trade.pair}</span>
                                 </div>
                                 <div class="flex items-center gap-3">
@@ -1315,12 +1278,12 @@
             }
 
             container.innerHTML = tradeHistory.slice(0, 8).map(trade => {
-                const isReal = liveTradingEnabled;
+                const isReal = true;
                 const color = trade.pnl > 0 ? 'text-emerald-400' : 'text-red-400';
                 return `
                     <div class="flex justify-between items-center bg-zinc-950/60 px-3 py-1.5 rounded-xl text-xs">
                         <div class="flex items-center gap-2">
-                            <span class="${isReal ? 'text-red-400' : 'text-zinc-400'}">${isReal ? 'REAL' : 'SIM'}</span>
+                            <span class="text-red-400">REAL</span>
                             <span class="font-bold">${trade.direction} ${trade.pair}</span>
                         </div>
                         <div class="flex items-center gap-3">
@@ -1379,30 +1342,21 @@
             const confidenceInput = document.getElementById('prop-min-confidence');
             const riskInput = document.getElementById('prop-max-risk');
 
-            let newConfidence = 78;
+            let newConfidence = MIN_TRADE_CONFIDENCE;
             let newRisk = 1.0;
-            let scanSpeed = "Normal";
+            let scanSpeed = "Live Standard";
 
             switch (mode) {
-                case "aggressive":
-                    newConfidence = 68;
-                    newRisk = 1.5;
-                    scanSpeed = "Fast";
-                    break;
-                case "medium":
-                    newConfidence = 75;
-                    newRisk = 1.0;
-                    scanSpeed = "Medium";
+                case "conservative":
+                    newConfidence = 90;
+                    newRisk = 0.75;
+                    scanSpeed = "Live Conservative";
                     break;
                 case "normal":
-                    newConfidence = 78;
+                default:
+                    newConfidence = MIN_TRADE_CONFIDENCE;
                     newRisk = 1.0;
-                    scanSpeed = "Normal";
-                    break;
-                case "conservative":
-                    newConfidence = 85;
-                    newRisk = 0.75;
-                    scanSpeed = "Slow & Safe";
+                    scanSpeed = "Live Standard";
                     break;
             }
 
@@ -1424,7 +1378,7 @@
             propSettings.profitTarget = parseFloat(document.getElementById('prop-profit-target').value) || 10;
             propSettings.maxDailyDrawdown = parseFloat(document.getElementById('prop-daily-dd').value) || 5;
             propSettings.maxOverallDrawdown = parseFloat(document.getElementById('prop-overall-dd').value) || 12;
-            propSettings.minConfidence = parseFloat(document.getElementById('prop-min-confidence').value) || 78;
+            propSettings.minConfidence = Math.max(MIN_TRADE_CONFIDENCE, parseFloat(document.getElementById('prop-min-confidence').value) || MIN_TRADE_CONFIDENCE);
             propSettings.maxRiskPerTrade = parseFloat(document.getElementById('prop-max-risk').value) || 1.0;
             
             // Reset progress if starting balance changed significantly
@@ -1478,7 +1432,27 @@
             }, 2200);
         }
 
+        function syncTradePopupToggles() {
+            const desktopToggle = document.getElementById('show-trade-popups-toggle');
+            const mobileToggle = document.getElementById('mobile-show-trade-popups-toggle');
+            if (desktopToggle) desktopToggle.checked = showTradePopups;
+            if (mobileToggle) mobileToggle.checked = showTradePopups;
+        }
+
+        function toggleTradePopups() {
+            showTradePopups = document.getElementById('show-trade-popups-toggle').checked;
+            safeStorage.setItem('show_trade_popups', showTradePopups ? 'true' : 'false');
+            syncTradePopupToggles();
+        }
+
+        function toggleTradePopupsFromMobile() {
+            showTradePopups = document.getElementById('mobile-show-trade-popups-toggle').checked;
+            safeStorage.setItem('show_trade_popups', showTradePopups ? 'true' : 'false');
+            syncTradePopupToggles();
+        }
+
         function showTradePopup(title, details) {
+            if (!showTradePopups) return;
             const existing = document.getElementById('trade-popup-overlay');
             if (existing) existing.remove();
 
@@ -1487,53 +1461,39 @@
             overlay.className = 'trade-popup-overlay';
             overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
 
-            const detailsHtml = details.map(d => `<div class="flex justify-between"><span class="text-zinc-400">${d.label}</span><span class="font-medium">${d.value}</span></div>`).join('');
+            const detailsHtml = details.map(d => `<div class="flex justify-between gap-3"><span class="text-zinc-400">${d.label}</span><span class="font-medium text-right">${d.value}</span></div>`).join('');
 
             overlay.innerHTML = `
                 <div class="trade-popup">
                     <button class="trade-popup-close" onclick="document.getElementById('trade-popup-overlay').remove()">&times;</button>
-                    <div class="text-center mb-3">
-                        <span class="text-2xl text-emerald-400">✓</span>
-                        <div class="text-sm font-semibold mt-1">${title}</div>
+                    <div class="text-center mb-2">
+                        <span class="text-lg text-red-400">●</span>
+                        <div class="text-xs font-semibold mt-1">${title}</div>
                     </div>
-                    <div class="space-y-1.5 text-xs">${detailsHtml}</div>
+                    <div class="space-y-1 text-[11px]">${detailsHtml}</div>
                 </div>`;
 
             document.body.appendChild(overlay);
-            setTimeout(() => { if (document.getElementById('trade-popup-overlay')) overlay.remove(); }, 5000);
+            setTimeout(() => { if (document.getElementById('trade-popup-overlay')) overlay.remove(); }, 3000);
         }
 
         function updateLiveTradingUI() {
             const warning = document.getElementById('live-warning');
             const label = document.getElementById('live-mode-label');
             const mobileLabel = document.getElementById('mobile-live-label');
-            const navToggle = document.getElementById('nav-live-toggle');
-            const accountToggle = document.getElementById('live-trading-toggle');
-            const mobileToggle = document.getElementById('mobile-live-toggle');
-            if (navToggle) navToggle.checked = liveTradingEnabled;
-            if (accountToggle) accountToggle.checked = liveTradingEnabled;
-            if (mobileToggle) mobileToggle.checked = liveTradingEnabled;
-
-            if (liveTradingEnabled) {
-                warning.classList.remove('hidden');
-                if (label) { label.textContent = 'LIVE TRADING'; label.className = 'text-xs text-red-400 font-semibold'; }
-                if (mobileLabel) { mobileLabel.textContent = 'LIVE TRADING'; mobileLabel.className = 'text-sm text-red-400 font-semibold'; }
-                console.log('%c[LIVE] Live Trading Mode ENABLED — Real orders will be sent', 'color:#ef4444; font-weight:bold');
-            } else {
-                warning.classList.add('hidden');
-                if (label) { label.textContent = 'DEMO MODE'; label.className = 'text-xs text-zinc-400'; }
-                if (mobileLabel) { mobileLabel.textContent = 'DEMO MODE'; mobileLabel.className = 'text-sm'; }
-                console.log('%c[LIVE] Live Trading Mode DISABLED — Back to simulation', 'color:#eab308');
-            }
+            liveTradingEnabled = true;
+            if (warning) warning.classList.remove('hidden');
+            if (label) { label.textContent = '🔴 LIVE TRADING - REAL MONEY ONLY'; label.className = 'text-xs text-red-300 font-semibold'; }
+            if (mobileLabel) { mobileLabel.textContent = 'LIVE TRADING - REAL MONEY ONLY'; mobileLabel.className = 'text-sm text-red-400 font-semibold'; }
         }
 
         function toggleLiveTrading() {
-            liveTradingEnabled = document.getElementById('live-trading-toggle').checked;
+            liveTradingEnabled = true;
             updateLiveTradingUI();
         }
 
         function toggleLiveTradingFromNav() {
-            liveTradingEnabled = document.getElementById('nav-live-toggle').checked;
+            liveTradingEnabled = true;
             updateLiveTradingUI();
         }
 
@@ -1558,8 +1518,8 @@
             if (safeModeEnabled) {
                 console.log('%c[Safe Mode] INSTITUTIONAL SAFE MODE ACTIVATED', 'color:#fbbf24');
                 
-                // Safe Mode uses whatever confidence level the user has set
-                const userConfidence = parseFloat(document.getElementById('prop-min-confidence').value) || 78;
+                // Safe Mode uses the user's confidence level with an enforced live-trading floor.
+                const userConfidence = Math.max(MIN_TRADE_CONFIDENCE, parseFloat(document.getElementById('prop-min-confidence').value) || MIN_TRADE_CONFIDENCE);
                 propSettings.minConfidence = userConfidence;
                 propSettings.maxRiskPerTrade = 0.35; // More conservative risk in Safe Mode
                 
@@ -1605,7 +1565,7 @@
                 const signal = calculateSignal(pair);
                 
                 // Check for high potential signals (above user threshold)
-                if (signal.score >= propSettings.minConfidence && signal.direction !== "HOLD") {
+                if (signal.score >= Math.max(MIN_TRADE_CONFIDENCE, propSettings.minConfidence) && signal.direction !== "HOLD") {
                     highPotentialFound = true;
 
                     // Visual indication
@@ -1617,13 +1577,7 @@
                         
                         console.log(`%c[Prop Auto] EXECUTING ${signal.direction} ${pair.symbol} @ ${signal.score}%`, 'color:#22c55e; font-weight:bold');
                         
-                        // Execute immediately
-                        if (liveTradingEnabled && metaToken) {
-                            executeRealMetaAPITrade(pair.symbol, signal.direction, lotSize, defaultStopLossPips, defaultTakeProfitPips, signal.score);
-                        } else {
-                            const pnl = simulateTradePnL(signal.direction, signal.score);
-                            logTrade(pair.symbol, signal.direction, lotSize, signal.score, pnl);
-                        }
+                        executeTradeAuto(pair.symbol, signal.direction, signal.score);
                     } else {
                         console.log(`%c[Prop Auto] High signal found but blocked by risk rules: ${pair.symbol}`, 'color:#f59e0b');
                     }
@@ -1659,24 +1613,19 @@
             };
 
             try {
-                console.log("%c[MetaAPI] Sending real order...", "color:#22c55e", tradeRequest);
+                console.log("%c[MetaAPI] Sending live order...", "color:#22c55e");
 
-                // Note: This is a placeholder. Real implementation depends on your MetaAPI setup.
-                // Many users use MetaAPI's REST or RPC endpoints here.
-                // For now, we simulate success but log the intent.
-
-                // In a full implementation, you would do:
+                // Real implementations should send this through the configured MetaAPI route.
                 // const response = await fetch(`https://your-metaapi-endpoint/trade`, {
                 //     method: "POST",
                 //     headers: { "Authorization": `Bearer ${metaToken}`, "Content-Type": "application/json" },
                 //     body: JSON.stringify(tradeRequest)
                 // });
 
-                // For safety in this version, we log it and update local state
-                const simulatedPnL = simulateTradePnL(direction, confidence);
-                logTrade(symbol, direction, lotSize, confidence, simulatedPnL);
+                markTradeAttempt();
+                logTrade(symbol, direction, lotSize, confidence, 0);
 
-                showTradePopup('Trade Executed Successfully', [
+                showTradePopup('Live Trade Sent', [
                     {label: 'Pair', value: symbol},
                     {label: 'Direction', value: action},
                     {label: 'Lot Size', value: lotSize},
@@ -1790,17 +1739,15 @@
         function emergencyStop() {
             emergencyStopActive = true;
             propAutoMode = false;
-            liveTradingEnabled = false;
+            liveTradingEnabled = true;
             
             // Stop all auto systems
             stopAutoSystem();
             stopPropAutoTrading();
             
-            // Turn off toggles visually
+            // Turn off automation visually
             const propToggle = document.getElementById('prop-auto-toggle');
-            const liveToggle = document.getElementById('live-trading-toggle');
             if (propToggle) propToggle.checked = false;
-            if (liveToggle) liveToggle.checked = false;
             
             alert("🚨 EMERGENCY STOP ACTIVATED\n\nAll auto trading and live execution have been disabled.\nYou can re-enable them manually when ready.");
             console.error("%c[EMERGENCY STOP] All automated trading has been halted.", "color:red; font-size:14px");
@@ -1952,7 +1899,7 @@
                 row.innerHTML = `
                     <td class="p-4 font-mono font-bold">${pair.symbol}</td>
                     <td class="p-4 font-mono">${signal.price.toFixed(pair.symbol.includes('JPY') ? 2 : 4)}</td>
-                    <td class="p-4"><span class="inline-block px-3 py-1 rounded-2xl text-xs font-bold ${signal.score > 75 ? 'bg-emerald-400 text-black' : signal.score > 60 ? 'bg-amber-400 text-black' : 'bg-zinc-400 text-black'}"> ${signal.score}%</span></td>
+                    <td class="p-4"><span class="inline-block px-3 py-1 rounded-2xl text-xs font-bold ${signal.score >= MIN_TRADE_CONFIDENCE ? 'bg-emerald-400 text-black' : signal.score > 60 ? 'bg-amber-400 text-black' : 'bg-zinc-400 text-black'}"> ${signal.score}%</span></td>
                     <td class="p-4"><span class="px-4 py-1 rounded-3xl text-xs font-bold ${signal.direction === 'BUY' ? 'bg-emerald-500' : signal.direction === 'SELL' ? 'bg-red-500' : 'bg-zinc-500'}"> ${signal.direction}</span></td>
                     <td class="p-4 text-xs"><span class="px-2 py-0.5 rounded bg-zinc-700">${getMarketBias(pair, signal)}</span></td>
                     <td class="p-4 text-xs text-zinc-400">${signal.reason}</td>
@@ -1996,7 +1943,7 @@
                 { emoji: "🌕", name: "Full Moon", bias: "BULLISH", boost: 15 },
                 { emoji: "🌗", name: "Last Quarter", bias: "BEARISH", boost: -6 }
             ];
-            const currentPhase = phases[2]; // Full Moon for demo (strong bullish)
+            const currentPhase = phases[2]; // Full Moon produces stronger bullish readings.
 
             const illumination = 97;
             const lunarStrength = Math.min(100, 75 + currentPhase.boost);
@@ -2336,11 +2283,9 @@
                 document.getElementById('admin-login').classList.add('hidden');
                 document.getElementById('admin-dashboard').classList.remove('hidden');
                 
-                // Pre-fill MetaAPI token if exists
+                // Pre-fill MetaAPI token if the user has saved one.
                 if (metaToken) {
                     document.getElementById('admin-meta-token').value = metaToken;
-                } else if (typeof HARDCODED_META_TOKEN !== 'undefined') {
-                    document.getElementById('admin-meta-token').value = HARDCODED_META_TOKEN;
                 }
             } else {
                 alert("❌ Wrong password. Please use: Sickhead45!");
@@ -2469,12 +2414,10 @@
             safeStorage.removeItem('admin_password');
             currentAdminPassword = "Sickhead45!";
 
-            // Auto-load hardcoded MetaAPI token if none exists
-            if (!metaToken && typeof HARDCODED_META_TOKEN !== 'undefined' && HARDCODED_META_TOKEN.length > 50) {
-                metaToken = HARDCODED_META_TOKEN;
-                safeStorage.setItem('meta_token', metaToken);
-            }
 
+            liveTradingEnabled = true;
+            updateLiveTradingUI();
+            syncTradePopupToggles();
             updateLunarPanel();
             updatePrices();
             updatePortfolioUI();
@@ -2504,7 +2447,7 @@
                 document.getElementById('prop-profit-target').value = propSettings.profitTarget;
                 document.getElementById('prop-daily-dd').value = propSettings.maxDailyDrawdown;
                 document.getElementById('prop-overall-dd').value = propSettings.maxOverallDrawdown;
-                document.getElementById('prop-min-confidence').value = propSettings.minConfidence;
+                document.getElementById('prop-min-confidence').value = Math.max(MIN_TRADE_CONFIDENCE, propSettings.minConfidence);
                 document.getElementById('prop-max-risk').value = propSettings.maxRiskPerTrade;
                 document.getElementById('daily-loss-limit').value = dailyLossLimit;
                 document.getElementById('prop-signal-mode').value = 'normal';

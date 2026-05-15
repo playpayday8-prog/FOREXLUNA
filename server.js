@@ -22,9 +22,9 @@ app.get('/health', (req, res) => {
 
 app.post('/api/trade', async (req, res) => {
   try {
-    const { symbol, direction, lotSize, stopLoss, takeProfit, comment, metaToken, accountId } = req.body;
+    const { symbol, direction, lotSize, stopLoss, takeProfit, comment, accountId } = req.body;
 
-    if (!symbol || !direction || !lotSize || !metaToken) {
+    if (!symbol || !direction || !lotSize) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields'

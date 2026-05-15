@@ -71,18 +71,22 @@ app.post('/api/create-metaapi-account', async (req, res) => {
     const { platform, server: mtServer, login, password } = req.body;
 
     if (!platform || !mtServer || !login || !password) {
-      return res.status(400).json({ error: "Missing MT5 credentials" });
+      return res.status(400).json({ error: "Missing required fields: platform, server, login, and password are all required." });
+    }
+
+    const validPlatforms = ['mt4', 'mt5'];
+    if (!validPlatforms.includes(platform.toLowerCase())) {
+      return res.status(400).json({ error: "Invalid platform. Must be MT4 or MT5." });
     }
 
     const token = process.env.METAAPI_MASTER_TOKEN;
     if (!token) {
-      return res.status(500).json({ error: "Server configuration error: METAAPI_MASTER_TOKEN environment variable is not set. Please add it in the Netlify dashboard under Site settings > Environment variables." });
+      return res.status(503).json({ error: "MetaAPI is not configured. Please set the METAAPI_MASTER_TOKEN environment variable." });
     }
 
     const crypto = require('crypto');
     const transactionId = crypto.randomUUID().replace(/-/g, '');
 
-    const fetch = (await import('node-fetch')).default || globalThis.fetch;
     const response = await fetch("https://provisioning-api-v1.agiliumtrade.ai/users/current/accounts", {
       method: "POST",
       headers: {
@@ -92,9 +96,9 @@ app.post('/api/create-metaapi-account', async (req, res) => {
       },
       body: JSON.stringify({
         name: `User Account ${login}`,
-        login: login,
-        password: password,
-        server: mtServer,
+        login: String(login),
+        password: String(password),
+        server: String(mtServer),
         platform: platform.toLowerCase(),
         magic: 1000,
         type: "cloud-g2"
@@ -110,9 +114,9 @@ app.post('/api/create-metaapi-account', async (req, res) => {
 
     return res.json({
       success: true,
-      accountId: data?._id || data?.id || `metaapi-${Date.now()}`,
+      accountId: data?._id || data?.id,
       connectionStatus: data?.connectionStatus || "CONNECTED",
-      message: "Account created successfully in MetaAPI!"
+      message: "Account connected successfully via MetaAPI!"
     });
 
   } catch (error) {

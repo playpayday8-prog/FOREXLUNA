@@ -1978,62 +1978,63 @@
             const server = document.getElementById('mt-server').value.trim();
             const login = document.getElementById('mt-login').value.trim();
             const password = document.getElementById('mt-password').value.trim();
-            
+
             if (!server || !login || !password) {
                 alert("Please fill all fields");
                 return;
             }
-            
-            try {
-                const btn = document.querySelector('button[onclick="addMTAccount()"]');
-                const origText = btn.textContent;
-                btn.textContent = 'Connecting...';
-                btn.disabled = true;
 
+            const btn = document.querySelector('button[onclick="addMTAccount()"]');
+            const origText = btn.textContent;
+            btn.textContent = 'Connecting...';
+            btn.disabled = true;
+
+            try {
                 const response = await fetch('/api/create-metaapi-account', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ platform, server, login, password })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (!response.ok) {
-                    throw new Error(data.error || 'Failed to create account');
+                    throw new Error(data.error || 'Failed to connect account');
                 }
-                
-                const newAccount = { 
-                    id: data.accountId || Date.now(), 
-                    platform, 
-                    server, 
+
+                if (!data.accountId) {
+                    throw new Error('No account ID returned from MetaAPI');
+                }
+
+                const newAccount = {
+                    id: data.accountId,
+                    platform,
+                    server,
                     login,
-                    connectionStatus: data.connectionStatus 
+                    connectionStatus: data.connectionStatus
                 };
-                
+
                 connectedAccount = newAccount;
                 savedAccounts.push(newAccount);
-                
+
                 if (currentUser) {
                     saveUserData();
                 } else {
                     safeStorage.setItem('saved_mt_accounts', JSON.stringify(savedAccounts));
                 }
-                
+
                 document.getElementById('meta-dot').className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
                 document.getElementById('meta-status-text').innerHTML = `✅ ${platform.toUpperCase()}`;
                 document.getElementById('connected-account').innerHTML = `${platform.toUpperCase()} • ${server} • ${login}`;
                 document.getElementById('account-balance').innerHTML = `$${accountBalance.toLocaleString()}`;
                 document.getElementById('meta-status-panel').classList.remove('hidden');
-                
+
                 renderSavedAccounts();
-                alert("✅ Account created successfully in MetaAPI!");
-                
-                btn.textContent = origText;
-                btn.disabled = false;
+                alert("Account connected successfully via MetaAPI!");
             } catch (err) {
-                alert("⚠️ Error: " + err.message);
-                const btn = document.querySelector('button[onclick="addMTAccount()"]');
-                btn.textContent = 'Create & Connect Account';
+                alert("Connection failed: " + err.message);
+            } finally {
+                btn.textContent = origText;
                 btn.disabled = false;
             }
         }

@@ -76,7 +76,7 @@ app.post('/api/create-metaapi-account', async (req, res) => {
 
     const token = process.env.METAAPI_MASTER_TOKEN;
     if (!token) {
-      return res.status(500).json({ error: "Missing METAAPI_MASTER_TOKEN in environment" });
+      return res.status(500).json({ error: "Server configuration error: METAAPI_MASTER_TOKEN environment variable is not set. Please add it in the Netlify dashboard under Site settings > Environment variables." });
     }
 
     const crypto = require('crypto');

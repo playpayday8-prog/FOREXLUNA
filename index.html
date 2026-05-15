@@ -323,6 +323,14 @@
             </div>
         </div>
 
+        <!-- Connected Accounts List -->
+        <div id="connected-accounts-section" class="max-w-2xl mx-auto mt-8 hidden">
+            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2 text-zinc-200">
+                <i class="fa-solid fa-list"></i> Connected Accounts
+            </h2>
+            <div id="connected-accounts-list" class="space-y-3"></div>
+        </div>
+
         <!-- Live Trading Mode -->
         <div class="max-w-2xl mx-auto mt-6 bg-red-950/70 border border-red-500/60 rounded-3xl p-6">
             <div class="flex items-start gap-3">
@@ -2043,6 +2051,100 @@
             if (savedAccounts.length > 0 && !connectedAccount) {
                 connectedAccount = savedAccounts[savedAccounts.length - 1];
             }
+
+            const section = document.getElementById('connected-accounts-section');
+            const listEl = document.getElementById('connected-accounts-list');
+
+            if (savedAccounts.length === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            section.classList.remove('hidden');
+            listEl.innerHTML = savedAccounts.map((acc, idx) => {
+                const isActive = connectedAccount && connectedAccount.id === acc.id && connectedAccount.login === acc.login;
+                const isConnected = acc.connectionStatus === 'CONNECTED' || acc.connectionStatus === 'DEPLOYED';
+                const statusLabel = isConnected ? 'Connected' : (acc.connectionStatus || 'Unknown');
+
+                const badgeBg = isConnected ? 'bg-emerald-400/10' : 'bg-red-400/10';
+                const badgeBorder = isConnected ? 'border-emerald-400/30' : 'border-red-400/30';
+                const dotColor = isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-red-400';
+                const labelColor = isConnected ? 'text-emerald-400' : 'text-red-400';
+
+                return `
+                <div class="bg-zinc-900 border ${isActive ? 'border-cyan-400' : 'border-zinc-700'} rounded-2xl p-5 flex items-center justify-between gap-4 transition-all ${isActive ? 'ring-1 ring-cyan-400/30' : ''}">
+                    <div class="flex items-center gap-4 min-w-0 flex-1">
+                        <div class="flex-shrink-0 w-11 h-11 rounded-xl bg-zinc-800 flex items-center justify-center">
+                            <i class="fa-solid fa-chart-line text-cyan-400 text-lg"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-lg font-bold text-white">${acc.platform.toUpperCase()}-${acc.login}</span>
+                                ${isActive ? '<span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-400/10 text-cyan-400 border border-cyan-400/30">ACTIVE</span>' : ''}
+                            </div>
+                            <div class="text-sm text-zinc-400 mt-0.5">
+                                <span class="text-zinc-300">${acc.server || 'Unknown Server'}</span>
+                            </div>
+                            ${acc.id ? `<div class="text-[11px] text-zinc-500 font-mono mt-1 truncate" title="${acc.id}">MetaAPI ID: ${acc.id}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full ${badgeBg} border ${badgeBorder}">
+                            <div class="w-2 h-2 rounded-full ${dotColor}"></div>
+                            <span class="text-xs font-medium ${labelColor}">${statusLabel}</span>
+                        </div>
+                        ${!isActive ? `<button onclick="switchAccount(${idx})" class="text-xs px-3 py-1.5 rounded-full border border-cyan-400/40 text-cyan-400 hover:bg-cyan-400/10 transition-colors" title="Set as active account">Use</button>` : ''}
+                        <button onclick="disconnectAccount(${idx})" class="text-xs px-3 py-1.5 rounded-full border border-red-400/40 text-red-400 hover:bg-red-400/10 transition-colors" title="Remove account">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function switchAccount(idx) {
+            if (idx >= 0 && idx < savedAccounts.length) {
+                connectedAccount = savedAccounts[idx];
+
+                document.getElementById('meta-dot').className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
+                document.getElementById('meta-status-text').innerHTML = `✅ ${connectedAccount.platform.toUpperCase()}`;
+                document.getElementById('connected-account').innerHTML =
+                    `${connectedAccount.platform.toUpperCase()} • ${connectedAccount.server} • ${connectedAccount.login}`;
+                document.getElementById('account-balance').innerHTML = `$${accountBalance.toLocaleString()}`;
+                document.getElementById('meta-status-panel').classList.remove('hidden');
+
+                renderSavedAccounts();
+                if (currentUser) saveUserData();
+            }
+        }
+
+        function disconnectAccount(idx) {
+            if (idx < 0 || idx >= savedAccounts.length) return;
+            const acc = savedAccounts[idx];
+            if (!confirm(`Remove ${acc.platform.toUpperCase()}-${acc.login} (${acc.server})?\n\nThis will remove the account from your connected list.`)) return;
+
+            savedAccounts.splice(idx, 1);
+
+            if (connectedAccount && connectedAccount.id === acc.id && connectedAccount.login === acc.login) {
+                connectedAccount = savedAccounts.length > 0 ? savedAccounts[savedAccounts.length - 1] : null;
+                if (connectedAccount) {
+                    document.getElementById('meta-dot').className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
+                    document.getElementById('meta-status-text').innerHTML = `✅ ${connectedAccount.platform.toUpperCase()}`;
+                    document.getElementById('connected-account').innerHTML =
+                        `${connectedAccount.platform.toUpperCase()} • ${connectedAccount.server} • ${connectedAccount.login}`;
+                } else {
+                    document.getElementById('meta-dot').className = "w-2 h-2 bg-red-500 rounded-full";
+                    document.getElementById('meta-status-text').innerHTML = 'OFFLINE';
+                    document.getElementById('meta-status-panel').classList.add('hidden');
+                }
+            }
+
+            if (currentUser) {
+                saveUserData();
+            } else {
+                safeStorage.setItem('saved_mt_accounts', JSON.stringify(savedAccounts));
+            }
+            renderSavedAccounts();
         }
 
         // ==================== AUTH SYSTEM (Netlify Identity / GoTrue) ====================
@@ -2420,6 +2522,18 @@
             tryAutoLogin();
 
             // Load previously saved MT accounts
+            const knownAccount = {
+                id: '9e404907-6f24-4252-8dda-0ee60d1c60e0',
+                platform: 'mt5',
+                server: 'FTMO-Demo',
+                login: '1513414507',
+                connectionStatus: 'CONNECTED'
+            };
+            const alreadyExists = savedAccounts.some(a => a.login === knownAccount.login && a.server === knownAccount.server);
+            if (!alreadyExists) {
+                savedAccounts.push(knownAccount);
+            }
+
             if (savedAccounts.length > 0) {
                 connectedAccount = savedAccounts[savedAccounts.length - 1];
                 setTimeout(() => {
@@ -2432,6 +2546,7 @@
                         document.getElementById('account-balance').innerHTML = `$${accountBalance.toLocaleString()}`;
                         statusPanel.classList.remove('hidden');
                     }
+                    renderSavedAccounts();
                 }, 800);
             }
             

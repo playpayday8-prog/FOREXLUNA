@@ -307,7 +307,7 @@
                         <input id="mt-password" type="password" class="w-full px-6 py-5 bg-black border border-zinc-700 rounded-2xl font-mono text-base">
                     </div>
                 </div>
-                <button onclick="addMTAccount()" class="w-full py-6 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-semibold rounded-3xl text-xl">CONNECT TO METAAPI (REAL ACCOUNT)</button>
+                <button onclick="addMTAccount()" class="w-full py-6 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-semibold rounded-3xl text-xl">Create & Connect Account</button>
             </div>
         </div>
         <div id="meta-status-panel" class="max-w-2xl mx-auto hidden rounded-3xl p-8 bg-emerald-900/70 border border-emerald-400">
@@ -1982,7 +1982,7 @@
             `;
         }
 
-        function addMTAccount() {
+        async function addMTAccount() {
             const platform = document.getElementById('mt-platform').value;
             const server = document.getElementById('mt-server').value.trim();
             const login = document.getElementById('mt-login').value.trim();
@@ -1993,32 +1993,57 @@
                 return;
             }
             
-            if (metaToken) {
-                setTimeout(() => {
-                    const newAccount = { id: Date.now(), platform, server, login };
-                    
-                    // Save to memory and localStorage (per user if logged in)
-                    connectedAccount = newAccount;
-                    savedAccounts.push(newAccount);
-                    
-                    if (currentUser) {
-                        saveUserData();
-                    } else {
-                        safeStorage.setItem('saved_mt_accounts', JSON.stringify(savedAccounts));
-                    }
-                    
-                    // Update UI
-                    document.getElementById('meta-dot').className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
-                    document.getElementById('meta-status-text').innerHTML = `✅ ${platform.toUpperCase()}`;
-                    document.getElementById('connected-account').innerHTML = `${platform.toUpperCase()} • ${server} • ${login}`;
-                    document.getElementById('account-balance').innerHTML = `$${accountBalance.toLocaleString()}`;
-                    document.getElementById('meta-status-panel').classList.remove('hidden');
-                    
-                    renderSavedAccounts();
-                    alert(`✅ Account saved! ${platform.toUpperCase()} • ${login}`);
-                }, 600);
-            } else {
-                alert("⚠️ No MetaAPI token found. Go to Admin panel first.");
+            try {
+                const btn = document.querySelector('button[onclick="addMTAccount()"]');
+                const origText = btn.textContent;
+                btn.textContent = 'Connecting...';
+                btn.disabled = true;
+
+                const response = await fetch('/api/create-metaapi-account', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ platform, server, login, password })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to create account');
+                }
+                
+                const newAccount = { 
+                    id: data.accountId || Date.now(), 
+                    platform, 
+                    server, 
+                    login,
+                    connectionStatus: data.connectionStatus 
+                };
+                
+                connectedAccount = newAccount;
+                savedAccounts.push(newAccount);
+                
+                if (currentUser) {
+                    saveUserData();
+                } else {
+                    safeStorage.setItem('saved_mt_accounts', JSON.stringify(savedAccounts));
+                }
+                
+                document.getElementById('meta-dot').className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
+                document.getElementById('meta-status-text').innerHTML = `✅ ${platform.toUpperCase()}`;
+                document.getElementById('connected-account').innerHTML = `${platform.toUpperCase()} • ${server} • ${login}`;
+                document.getElementById('account-balance').innerHTML = `$${accountBalance.toLocaleString()}`;
+                document.getElementById('meta-status-panel').classList.remove('hidden');
+                
+                renderSavedAccounts();
+                alert("✅ Account created successfully in MetaAPI!");
+                
+                btn.textContent = origText;
+                btn.disabled = false;
+            } catch (err) {
+                alert("⚠️ Error: " + err.message);
+                const btn = document.querySelector('button[onclick="addMTAccount()"]');
+                btn.textContent = 'Create & Connect Account';
+                btn.disabled = false;
             }
         }
 

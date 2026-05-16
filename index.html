@@ -164,7 +164,7 @@
                 </div>
                 <div>
                     <div class="text-lg font-semibold">Welcome back, <span id="welcome-username" class="text-cyan-400"></span></div>
-                    <div class="text-xs text-zinc-400">Your data is synced and ready</div>
+                    <div class="text-xs text-zinc-400" id="broker-sync-label">Connect an MT4/MT5 account to sync live broker data</div>
                 </div>
             </div>
             <div class="text-xs text-zinc-500" id="welcome-status">Your data is synced and ready</div>
@@ -179,8 +179,8 @@
             
             <!-- Quick P&L Summary -->
             <div class="bg-zinc-900 border border-zinc-700 rounded-3xl px-5 py-3 text-right">
-                <div id="dash-pnl" class="text-emerald-400 text-2xl sm:text-3xl lg:text-4xl font-semibold tabular-nums">+$16,420</div>
-                <div class="text-emerald-400 text-xs sm:text-sm mt-0.5">+4.8% today • <span id="dash-winrate">68% WR</span></div>
+                <div id="dash-pnl" class="text-zinc-300 text-2xl sm:text-3xl lg:text-4xl font-semibold tabular-nums">$0.00</div>
+                <div id="dash-pnl-detail" class="text-zinc-400 text-xs sm:text-sm mt-0.5">Waiting for broker synchronization</div>
             </div>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -1636,7 +1636,7 @@
                 // });
 
                 markTradeAttempt();
-                logTrade(symbol, direction, lotSize, confidence, 0);
+                await fetchAccountInfo(connectedAccount);
 
                 showTradePopup('Live Trade Sent', [
                     {label: 'Pair', value: symbol},
@@ -2011,6 +2011,7 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Connecting to MetaAPI...';
             btn.disabled = true;
             btn.classList.add('opacity-70');
+            setBrokerSyncState(false);
 
             try {
                 const response = await fetch('/api/create-metaapi-account', {
@@ -2035,10 +2036,24 @@
                     server,
                     login,
                     broker: data.broker || server,
-                    connectionStatus: data.connectionStatus || 'CONNECTED'
+                    connectionStatus: data.connectionStatus || 'SYNCHRONIZED'
                 };
 
                 connectedAccount = newAccount;
+                if (data.accountInformation) {
+                    accountInfoCache[data.accountId] = {
+                        synchronized: true,
+                        accountInformation: data.accountInformation,
+                        balance: data.accountInformation.balance ?? 0,
+                        equity: data.accountInformation.equity ?? 0,
+                        profit: data.accountInformation.profit ?? 0,
+                        positions: data.positions || [],
+                        orders: data.orders || [],
+                        symbolPrices: {}
+                    };
+                    updateBalanceDisplay(accountInfoCache[data.accountId]);
+                    updateLiveTerminalDashboard(accountInfoCache[data.accountId]);
+                }
                 savedAccounts.push(newAccount);
 
                 if (currentUser) {
@@ -2062,6 +2077,7 @@
                 fetchAccountInfo(newAccount);
                 startAccountPolling();
             } catch (err) {
+                setBrokerSyncState(false, 'Broker synchronization failed');
                 showErrorToast(err.message);
             } finally {
                 btn.innerHTML = origText;
@@ -2072,26 +2088,47 @@
 
         let accountPollingInterval = null;
         let accountInfoCache = {};
+        let accountSyncPending = false;
 
         async function fetchAccountInfo(account) {
             if (!account || !account.id) return null;
             try {
+                setBrokerSyncState(false);
                 const res = await fetch('/api/metaapi-account-info', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ accountId: account.id })
                 });
-                if (!res.ok) return null;
+                if (!res.ok) {
+                    setBrokerSyncState(false, 'Broker synchronization unavailable');
+                    return null;
+                }
                 const info = await res.json();
                 const prev = JSON.stringify(accountInfoCache[account.id] || {});
                 accountInfoCache[account.id] = info;
+                account.connectionStatus = info.synchronized ? 'SYNCHRONIZED' : account.connectionStatus;
                 updateBalanceDisplay(info);
+                updateLiveTerminalDashboard(info);
                 if (JSON.stringify(info) !== prev) {
                     renderSavedAccounts();
                 }
                 return info;
             } catch {
+                setBrokerSyncState(false, 'Broker synchronization unavailable');
                 return null;
+            }
+        }
+
+        function setBrokerSyncState(done, message) {
+            accountSyncPending = !done;
+            const label = document.getElementById('broker-sync-label');
+            const welcomeStatus = document.getElementById('welcome-status');
+            const syncText = message || (done ? 'Live broker data synchronized' : 'Synchronizing with broker...');
+            if (label) label.textContent = syncText;
+            if (welcomeStatus) welcomeStatus.textContent = syncText;
+            if (!done && !message) {
+                const detail = document.getElementById('dash-pnl-detail');
+                if (detail) detail.textContent = 'Synchronizing with broker...';
             }
         }
 
@@ -2122,6 +2159,73 @@
             if (info.balance) {
                 accountBalance = parseFloat(info.balance);
             }
+            setBrokerSyncState(Boolean(info.synchronized));
+        }
+
+        function updateLiveTerminalDashboard(info) {
+            if (!info) return;
+            const positions = Array.isArray(info.positions) ? info.positions : [];
+            const orders = Array.isArray(info.orders) ? info.orders : [];
+            const accountInfo = info.accountInformation || info;
+            const balance = Number(accountInfo.balance ?? info.balance ?? 0);
+            const equity = Number(accountInfo.equity ?? info.equity ?? balance);
+            const floatingPnL = Number(accountInfo.profit ?? info.profit ?? positions.reduce((sum, pos) => sum + (Number(pos.profit) || 0), 0));
+
+            portfolioBalance = balance;
+            totalPnL = floatingPnL;
+            totalTrades = positions.length;
+            winningTrades = positions.filter(pos => Number(pos.profit) > 0).length;
+
+            const pnlEl = document.getElementById('dash-pnl');
+            if (pnlEl) {
+                pnlEl.textContent = `${floatingPnL >= 0 ? '+' : '-'}$${Math.abs(floatingPnL).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                pnlEl.className = `text-2xl sm:text-3xl lg:text-4xl font-semibold tabular-nums ${floatingPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+
+            const detail = document.getElementById('dash-pnl-detail');
+            if (detail) {
+                detail.textContent = `${positions.length} open position${positions.length === 1 ? '' : 's'} • Equity $${equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                detail.className = `text-xs sm:text-sm mt-0.5 ${floatingPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+
+            const balEl = document.getElementById('portfolio-balance');
+            if (balEl) balEl.textContent = '$' + balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            const pnlCard = document.getElementById('portfolio-pnl');
+            if (pnlCard) {
+                pnlCard.textContent = `${floatingPnL >= 0 ? '+' : '-'}$${Math.abs(floatingPnL).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                pnlCard.className = `text-3xl font-mono font-semibold mt-auto pt-3 tabular-nums ${floatingPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+
+            const tradesEl = document.getElementById('portfolio-trades');
+            if (tradesEl) tradesEl.innerHTML = `${positions.length} <span class="text-xs text-zinc-400">open</span>`;
+
+            const wrEl = document.getElementById('portfolio-winrate');
+            if (wrEl) wrEl.textContent = orders.length + ' orders';
+
+            updateBrokerSymbolPrices(info.symbolPrices || {}, positions);
+        }
+
+        function updateBrokerSymbolPrices(symbolPrices, positions) {
+            const symbolIds = {
+                EURUSD: 'dash-eur',
+                GBPUSD: 'dash-gbp',
+                USDJPY: 'dash-jpy',
+                BTCUSDT: 'dash-btc',
+                BTCUSD: 'dash-btc'
+            };
+            positions.forEach(pos => {
+                const price = Number(pos.currentPrice ?? pos.price ?? pos.openPrice);
+                if (pos.symbol && Number.isFinite(price)) symbolPrices[pos.symbol] = price;
+            });
+            Object.entries(symbolIds).forEach(([symbol, id]) => {
+                const price = Number(symbolPrices[symbol]);
+                const el = document.getElementById(id);
+                if (el && Number.isFinite(price)) {
+                    el.textContent = price.toFixed(symbol.includes('JPY') ? 3 : symbol.includes('BTC') ? 2 : 5);
+                    prices[symbol] = price;
+                }
+            });
         }
 
         function startAccountPolling() {
@@ -2159,8 +2263,8 @@
             section.classList.remove('hidden');
             listEl.innerHTML = savedAccounts.map((acc, idx) => {
                 const isActive = connectedAccount && connectedAccount.id === acc.id && connectedAccount.login === acc.login;
-                const isConnected = acc.connectionStatus === 'CONNECTED' || acc.connectionStatus === 'DEPLOYED';
-                const statusLabel = isConnected ? 'Connected' : (acc.connectionStatus || 'Deploying');
+                const isConnected = acc.connectionStatus === 'CONNECTED' || acc.connectionStatus === 'DEPLOYED' || acc.connectionStatus === 'SYNCHRONIZED';
+                const statusLabel = acc.connectionStatus === 'SYNCHRONIZED' ? 'Synchronized' : (isConnected ? 'Connected' : (acc.connectionStatus || 'Deploying'));
                 const cachedInfo = accountInfoCache[acc.id];
 
                 const badgeBg = isConnected ? 'bg-emerald-400/10' : 'bg-yellow-400/10';
@@ -2650,19 +2754,6 @@
 
             // Try auto-login
             tryAutoLogin();
-
-            // Load previously saved MT accounts
-            const knownAccount = {
-                id: '9e404907-6f24-4252-8dda-0ee60d1c60e0',
-                platform: 'mt5',
-                server: 'FTMO-Demo',
-                login: '1513414507',
-                connectionStatus: 'CONNECTED'
-            };
-            const alreadyExists = savedAccounts.some(a => a.login === knownAccount.login && a.server === knownAccount.server);
-            if (!alreadyExists) {
-                savedAccounts.push(knownAccount);
-            }
 
             if (savedAccounts.length > 0) {
                 connectedAccount = savedAccounts[savedAccounts.length - 1];

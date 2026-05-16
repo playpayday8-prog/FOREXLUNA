@@ -55,11 +55,49 @@ export default async (req: Request) => {
       return Response.json({ error: `MetaAPI Error: ${errorMessage}` }, { status: response.status });
     }
 
+    const accountId = data?._id || data?.id;
+
+    // Deploy the account so it starts connecting to the broker
+    if (accountId) {
+      await fetch(
+        `https://provisioning-api-v1.agiliumtrade.ai/users/current/accounts/${accountId}/deploy`,
+        {
+          method: "POST",
+          headers: { "auth-token": token },
+        }
+      ).catch(() => {});
+
+      // Poll for connection status (up to 15 seconds)
+      let connectionStatus = data?.connectionStatus || "DEPLOYING";
+      for (let i = 0; i < 5; i++) {
+        await new Promise((r) => setTimeout(r, 3000));
+        const statusRes = await fetch(
+          `https://provisioning-api-v1.agiliumtrade.ai/users/current/accounts/${accountId}`,
+          { headers: { "auth-token": token } }
+        ).catch(() => null);
+
+        if (statusRes && statusRes.ok) {
+          const statusData = await statusRes.json().catch(() => null);
+          connectionStatus = statusData?.connectionStatus || connectionStatus;
+          if (connectionStatus === "CONNECTED") break;
+        }
+      }
+
+      return Response.json({
+        success: true,
+        accountId,
+        connectionStatus,
+        broker: data?.broker || server,
+        message: "Account created and connected successfully!",
+      });
+    }
+
     return Response.json({
       success: true,
-      accountId: data?._id || data?.id,
-      connectionStatus: data?.connectionStatus || "CONNECTED",
-      message: "Account connected successfully via MetaAPI!",
+      accountId,
+      connectionStatus: data?.connectionStatus || "DEPLOYED",
+      broker: data?.broker || server,
+      message: "Account created successfully!",
     });
   } catch (error: any) {
     return Response.json({ error: error.message || "Internal Server Error" }, { status: 500 });

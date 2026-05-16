@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import type { Config } from "@netlify/functions";
+import MetaApi from "metaapi.cloud-sdk/node";
 
 export default async (req: Request) => {
   if (req.method !== "POST") {
@@ -57,37 +58,29 @@ export default async (req: Request) => {
 
     const accountId = data?._id || data?.id;
 
-    // Deploy the account so it starts connecting to the broker
     if (accountId) {
-      await fetch(
-        `https://provisioning-api-v1.agiliumtrade.ai/users/current/accounts/${accountId}/deploy`,
-        {
-          method: "POST",
-          headers: { "auth-token": token },
-        }
-      ).catch(() => {});
+      const api = new MetaApi(token);
+      const account = await api.metatraderAccountApi.getAccount(accountId);
 
-      // Poll for connection status (up to 15 seconds)
-      let connectionStatus = data?.connectionStatus || "DEPLOYING";
-      for (let i = 0; i < 5; i++) {
-        await new Promise((r) => setTimeout(r, 3000));
-        const statusRes = await fetch(
-          `https://provisioning-api-v1.agiliumtrade.ai/users/current/accounts/${accountId}`,
-          { headers: { "auth-token": token } }
-        ).catch(() => null);
+      await account.deploy();
+      await account.waitConnected();
 
-        if (statusRes && statusRes.ok) {
-          const statusData = await statusRes.json().catch(() => null);
-          connectionStatus = statusData?.connectionStatus || connectionStatus;
-          if (connectionStatus === "CONNECTED") break;
-        }
-      }
+      const connection = account.getRPCConnection();
+      await connection.connect();
+      await connection.waitSynchronized();
+
+      const accountInfo = connection.terminalState.accountInformation;
+      const positions = connection.terminalState.positions || [];
+      const orders = connection.terminalState.orders || [];
 
       return Response.json({
         success: true,
         accountId,
-        connectionStatus,
+        connectionStatus: "SYNCHRONIZED",
         broker: data?.broker || server,
+        accountInformation: accountInfo,
+        positions,
+        orders,
         message: "Account created and connected successfully!",
       });
     }

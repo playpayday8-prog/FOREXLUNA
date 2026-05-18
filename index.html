@@ -225,6 +225,15 @@
             </div>
         </div>
 
+        <!-- Live Positions -->
+        <div id="live-positions-panel" class="mt-6 bg-zinc-900 border border-zinc-700 rounded-3xl p-6 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-zinc-200">Open Positions</h3>
+                <span id="positions-count" class="text-xs text-zinc-400">0 positions</span>
+            </div>
+            <div id="live-positions-list" class="space-y-2"></div>
+        </div>
+
         <div class="lunar-panel rounded-3xl p-8 mt-8">
             <h2 class="font-orbitron text-2xl sm:text-3xl mb-6 flex items-center gap-3 text-purple-400"><i class="fa-solid fa-moon"></i> LIVE LUNAR CYCLE</h2>
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 text-center" id="lunar-grid"></div>
@@ -1093,14 +1102,7 @@
 
         function executeTrade(pair, direction, confidence) {
             direction = String(direction || '').trim();
-            const gateFailure = getTradeGateFailure(confidence);
-            if (gateFailure) {
-                showErrorToast(gateFailure);
-                if (!connectedAccount) navigateTo('accounts');
-                return;
-            }
-            const lotSize = calculateLotSize(confidence, pair);
-            executeRealMetaAPITrade(pair, direction, lotSize, defaultStopLossPips, defaultTakeProfitPips, confidence);
+            confirmTradeExecution(pair, direction, confidence);
         }
 
         function executeTradeAuto(pair, direction, confidence) {
@@ -1445,6 +1447,72 @@
             }, 2200);
         }
 
+        function confirmTradeExecution(pair, direction, confidence) {
+            direction = String(direction || '').trim();
+            const gateFailure = getTradeGateFailure(confidence);
+            if (gateFailure) {
+                showErrorToast(gateFailure);
+                if (!connectedAccount) navigateTo('accounts');
+                return;
+            }
+            const lotSize = calculateLotSize(confidence, pair);
+            const slPips = defaultStopLossPips;
+            const tpPips = defaultTakeProfitPips;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black/70 backdrop-blur-sm z-[99998] flex items-center justify-center p-4';
+            overlay.innerHTML = `
+                <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-8 max-w-md w-full shadow-2xl">
+                    <div class="text-center mb-6">
+                        <div class="text-2xl font-bold text-amber-400 mb-2">Confirm Live Trade</div>
+                        <div class="text-xs text-zinc-400">This will execute a REAL order with REAL money</div>
+                    </div>
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between text-sm"><span class="text-zinc-400">Symbol</span><span class="font-bold">${pair}</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-zinc-400">Direction</span><span class="font-bold ${direction === 'BUY' ? 'text-emerald-400' : 'text-red-400'}">${direction}</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-zinc-400">Lot Size</span><span class="font-bold">${lotSize}</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-zinc-400">Stop Loss</span><span class="font-bold">${slPips} pips</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-zinc-400">Take Profit</span><span class="font-bold">${tpPips} pips</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-zinc-400">Confidence</span><span class="font-bold">${confidence}%</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-zinc-400">Account</span><span class="font-bold text-xs">${connectedAccount.broker || connectedAccount.server}</span></div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button id="confirm-trade-cancel" class="flex-1 py-3 border border-zinc-600 hover:bg-zinc-800 rounded-2xl font-semibold text-sm">CANCEL</button>
+                        <button id="confirm-trade-execute" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-semibold text-sm">EXECUTE</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            overlay.querySelector('#confirm-trade-cancel').addEventListener('click', () => overlay.remove());
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+            overlay.querySelector('#confirm-trade-execute').addEventListener('click', () => {
+                overlay.remove();
+                executeRealMetaAPITrade(pair, direction, lotSize, slPips, tpPips, confidence);
+            });
+        }
+
+        async function closePositionById(positionId) {
+            if (!connectedAccount) {
+                showErrorToast("No account connected.");
+                return;
+            }
+            try {
+                const response = await fetch('/api/close-position', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accountId: connectedAccount.id, positionId })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Failed to close position');
+                showSuccessToast('Position closed successfully');
+                await fetchAccountInfo(connectedAccount);
+            } catch (error) {
+                showErrorToast('Close failed: ' + (error.message || 'Unknown error'));
+            }
+        }
+
         function syncTradePopupToggles() {
             const desktopToggle = document.getElementById('show-trade-popups-toggle');
             const mobileToggle = document.getElementById('mobile-show-trade-popups-toggle');
@@ -1605,50 +1673,83 @@
             }
         }
 
+        function pipsToPrice(symbol, pips) {
+            if (!pips || pips <= 0) return 0;
+            const sym = (symbol || '').toUpperCase();
+            if (sym.includes('JPY')) return pips * 0.01;
+            if (sym.includes('XAU') || sym.includes('GOLD')) return pips * 0.1;
+            if (sym.includes('BTC')) return pips * 1;
+            return pips * 0.0001;
+        }
+
         async function executeRealMetaAPITrade(symbol, direction, lotSize, slPips, tpPips, confidence) {
             if (!connectedAccount) {
                 alert("Account not connected.");
                 return;
             }
 
-            const action = direction === "BUY" ? "BUY" : "SELL";
-            
-            // This is a simplified MetaAPI trade request structure.
-            // In production, you may need to use MetaAPI's SDK or correct endpoint.
+            const action = direction.trim().toUpperCase() === "BUY" ? "BUY" : "SELL";
+            const currentPrice = prices[symbol];
+
+            let stopLossPrice = null;
+            let takeProfitPrice = null;
+
+            if (currentPrice && slPips > 0) {
+                const slDistance = pipsToPrice(symbol, slPips);
+                stopLossPrice = action === "BUY"
+                    ? parseFloat((currentPrice - slDistance).toFixed(5))
+                    : parseFloat((currentPrice + slDistance).toFixed(5));
+            }
+            if (currentPrice && tpPips > 0) {
+                const tpDistance = pipsToPrice(symbol, tpPips);
+                takeProfitPrice = action === "BUY"
+                    ? parseFloat((currentPrice + tpDistance).toFixed(5))
+                    : parseFloat((currentPrice - tpDistance).toFixed(5));
+            }
+
             const tradeRequest = {
+                accountId: connectedAccount.id,
                 action: action,
                 symbol: symbol,
                 volume: lotSize,
-                type: "ORDER_TYPE_MARKET",
-                stopLoss: slPips,      // You may need to convert to price level
-                takeProfit: tpPips,    // You may need to convert to price level
-                comment: `ForexLuna-${confidence}%`
+                stopLoss: stopLossPrice,
+                takeProfit: takeProfitPrice,
+                comment: `LunaSignals-${confidence}%`
             };
 
             try {
-                console.log("%c[MetaAPI] Sending live order...", "color:#22c55e");
+                console.log("%c[MetaAPI] Sending live order...", "color:#22c55e", tradeRequest);
 
-                // Real implementations should send this through the configured backend route.
-                // const response = await fetch('/api/trade', {
-                //     method: "POST",
-                //     headers: { "Content-Type": "application/json" },
-                //     body: JSON.stringify(tradeRequest)
-                // });
+                const response = await fetch('/api/execute-trade', {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(tradeRequest)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Trade execution failed');
+                }
 
                 markTradeAttempt();
                 await fetchAccountInfo(connectedAccount);
 
-                showTradePopup('Live Trade Sent', [
+                const pnlEstimate = 0;
+                logTrade(symbol, action, lotSize, confidence, pnlEstimate);
+
+                showTradePopup('Live Trade Executed', [
                     {label: 'Pair', value: symbol},
                     {label: 'Direction', value: action},
                     {label: 'Lot Size', value: lotSize},
-                    {label: 'Stop Loss', value: slPips + ' pips'},
-                    {label: 'Take Profit', value: tpPips + ' pips'},
+                    {label: 'Stop Loss', value: stopLossPrice ? stopLossPrice.toFixed(5) : 'None'},
+                    {label: 'Take Profit', value: takeProfitPrice ? takeProfitPrice.toFixed(5) : 'None'},
+                    {label: 'Order ID', value: result.orderId || 'Confirmed'},
                     {label: 'Confidence', value: confidence + '%'}
                 ]);
             } catch (error) {
                 console.error("MetaAPI Trade Error:", error);
-                alert("Failed to send real order. Check console for details.");
+                showErrorToast("Trade failed: " + (error.message || "Unknown error. Check console."));
             }
         }
 
@@ -2203,7 +2304,51 @@
             const wrEl = document.getElementById('portfolio-winrate');
             if (wrEl) wrEl.textContent = orders.length + ' orders';
 
+            renderLivePositions(positions);
+
             updateBrokerSymbolPrices(info.symbolPrices || {}, positions);
+        }
+
+        function renderLivePositions(positions) {
+            const panel = document.getElementById('live-positions-panel');
+            const list = document.getElementById('live-positions-list');
+            const countEl = document.getElementById('positions-count');
+            if (!panel || !list) return;
+
+            if (positions.length === 0) {
+                panel.classList.add('hidden');
+                return;
+            }
+
+            panel.classList.remove('hidden');
+            if (countEl) countEl.textContent = `${positions.length} position${positions.length === 1 ? '' : 's'}`;
+
+            list.innerHTML = positions.map(pos => {
+                const profit = Number(pos.profit) || 0;
+                const profitColor = profit >= 0 ? 'text-emerald-400' : 'text-red-400';
+                const dirColor = pos.type === 'POSITION_TYPE_BUY' ? 'bg-emerald-600' : 'bg-red-600';
+                const dirLabel = pos.type === 'POSITION_TYPE_BUY' ? 'BUY' : 'SELL';
+                const openPrice = Number(pos.openPrice || pos.price || 0);
+                const currentPrice = Number(pos.currentPrice || pos.price || 0);
+                const posId = pos.id || pos.positionId || '';
+
+                return `<div class="flex items-center justify-between bg-zinc-800/60 border border-zinc-700/50 rounded-2xl px-4 py-3">
+                    <div class="flex items-center gap-3">
+                        <span class="px-2 py-0.5 text-xs font-bold rounded-lg ${dirColor}">${dirLabel}</span>
+                        <div>
+                            <div class="font-semibold text-sm">${pos.symbol || 'N/A'}</div>
+                            <div class="text-xs text-zinc-500">${pos.volume || pos.lots || '?'} lots • Open: ${openPrice.toFixed(5)}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <div class="font-mono text-sm ${profitColor}">${profit >= 0 ? '+' : ''}$${profit.toFixed(2)}</div>
+                            <div class="text-xs text-zinc-500">Current: ${currentPrice.toFixed(5)}</div>
+                        </div>
+                        ${posId ? `<button onclick="closePositionById('${posId}')" class="px-3 py-1.5 text-xs font-semibold bg-red-600/80 hover:bg-red-500 rounded-xl transition-colors" title="Close this position">CLOSE</button>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
         }
 
         function updateBrokerSymbolPrices(symbolPrices, positions) {

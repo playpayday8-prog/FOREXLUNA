@@ -45,7 +45,7 @@ export default async (req: Request) => {
       {
         method: "POST",
         headers: {
-          "auth-token": token,
+          "Authorization": `Bearer ${token}`,
           "transaction-id": transactionId,
           "Content-Type": "application/json",
         },

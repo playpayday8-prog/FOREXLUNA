@@ -2,6 +2,9 @@ import crypto from "node:crypto";
 import type { Config } from "@netlify/functions";
 import MetaApi from "metaapi.cloud-sdk/node";
 
+const CONNECT_TIMEOUT_SEC = 60;
+const SYNC_TIMEOUT_SEC = 60;
+
 export default async (req: Request) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -16,7 +19,10 @@ export default async (req: Request) => {
     const { platform, server, login, password } = body;
 
     if (!platform || !server || !login || !password) {
-      return Response.json({ error: "Missing required fields: platform, server, login, and password are all required." }, { status: 400 });
+      return Response.json(
+        { error: "Missing required fields: platform, server, login, and password are all required." },
+        { status: 400 }
+      );
     }
 
     const validPlatforms = ["mt4", "mt5"];
@@ -26,48 +32,63 @@ export default async (req: Request) => {
 
     const token = Netlify.env.get("METAAPI_MASTER_TOKEN");
     if (!token) {
-      return Response.json({ error: "MetaAPI is not configured. Please set the METAAPI_MASTER_TOKEN environment variable in the Netlify dashboard (Site settings > Environment variables)." }, { status: 503 });
+      return Response.json(
+        { error: "MetaAPI is not configured. Please set the METAAPI_MASTER_TOKEN environment variable in the Netlify dashboard (Site settings > Environment variables)." },
+        { status: 503 }
+      );
     }
 
     const transactionId = crypto.randomUUID().replace(/-/g, "");
 
-    const response = await fetch("https://provisioning-api-v1.agiliumtrade.ai/users/current/accounts", {
-      method: "POST",
-      headers: {
-        "auth-token": token,
-        "transaction-id": transactionId,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: `User Account ${login}`,
-        login: String(login),
-        password: String(password),
-        server: String(server),
-        platform: platform.toLowerCase(),
-        magic: 1000,
-        type: "cloud-g2",
-      }),
-    });
+    const provisioningResponse = await fetch(
+      "https://provisioning-api-v1.agiliumtrade.ai/users/current/accounts",
+      {
+        method: "POST",
+        headers: {
+          "auth-token": token,
+          "transaction-id": transactionId,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: `User Account ${login}`,
+          login: String(login),
+          password: String(password),
+          server: String(server),
+          platform: platform.toLowerCase(),
+          magic: 1000,
+          type: "cloud-g2",
+        }),
+      }
+    );
 
-    const data = await response.json().catch(() => null);
+    const provisioningData = await provisioningResponse.json().catch(() => null);
 
-    if (!response.ok) {
-      const errorMessage = data?.message || data?.error || response.statusText;
-      return Response.json({ error: `MetaAPI Error: ${errorMessage}` }, { status: response.status });
+    if (!provisioningResponse.ok) {
+      const errorMessage = provisioningData?.message || provisioningData?.error || provisioningResponse.statusText;
+      return Response.json(
+        { error: `MetaAPI Error: ${errorMessage}` },
+        { status: provisioningResponse.status }
+      );
     }
 
-    const accountId = data?._id || data?.id;
+    const accountId = provisioningData?._id || provisioningData?.id;
+    if (!accountId) {
+      return Response.json(
+        { error: "Account created but no ID returned from MetaAPI" },
+        { status: 502 }
+      );
+    }
 
-    if (accountId) {
+    try {
       const api = new MetaApi(token);
       const account = await api.metatraderAccountApi.getAccount(accountId);
 
       await account.deploy();
-      await account.waitConnected();
+      await account.waitConnected(CONNECT_TIMEOUT_SEC);
 
       const connection = account.getRPCConnection();
       await connection.connect();
-      await connection.waitSynchronized();
+      await connection.waitSynchronized({ timeoutInSeconds: SYNC_TIMEOUT_SEC });
 
       const accountInfo = connection.terminalState.accountInformation;
       const positions = connection.terminalState.positions || [];
@@ -77,23 +98,30 @@ export default async (req: Request) => {
         success: true,
         accountId,
         connectionStatus: "SYNCHRONIZED",
-        broker: data?.broker || server,
+        broker: provisioningData?.broker || server,
         accountInformation: accountInfo,
         positions,
         orders,
         message: "Account created and connected successfully!",
       });
+    } catch (syncError: any) {
+      return Response.json({
+        success: true,
+        accountId,
+        connectionStatus: "DEPLOYING",
+        broker: provisioningData?.broker || server,
+        message: "Account created. Synchronization in progress — use polling to check status.",
+      });
     }
-
-    return Response.json({
-      success: true,
-      accountId,
-      connectionStatus: data?.connectionStatus || "DEPLOYED",
-      broker: data?.broker || server,
-      message: "Account created successfully!",
-    });
   } catch (error: any) {
-    return Response.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    const msg = error.message || "Internal Server Error";
+    if (msg.includes("ENOTFOUND") || msg.includes("ECONNREFUSED") || msg.includes("fetch failed")) {
+      return Response.json(
+        { error: "Cannot reach MetaAPI servers. Please try again in a moment." },
+        { status: 502 }
+      );
+    }
+    return Response.json({ error: msg }, { status: 500 });
   }
 };
 

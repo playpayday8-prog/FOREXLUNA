@@ -90,7 +90,7 @@ app.post('/api/create-metaapi-account', async (req, res) => {
     const response = await fetch("https://provisioning-api-v1.agiliumtrade.ai/users/current/accounts", {
       method: "POST",
       headers: {
-        "auth-token": token,
+        "Authorization": `Bearer ${token}`,
         "transaction-id": transactionId,
         "Content-Type": "application/json"
       },

@@ -2109,82 +2109,113 @@
 
             const btn = document.querySelector('button[onclick="addMTAccount()"]');
             const origText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Connecting to MetaAPI...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Creating account...';
             btn.disabled = true;
             btn.classList.add('opacity-70');
-            setBrokerSyncState(false);
+            setBrokerSyncState(false, 'Creating MetaAPI account...');
 
-            try {
-                const response = await fetch('/api/create-metaapi-account', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ platform, server, login, password })
-                });
+            const MAX_RETRIES = 2;
+            let lastError = null;
 
-                const data = await response.json();
+            for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+                try {
+                    if (attempt > 0) {
+                        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Retry ${attempt}/${MAX_RETRIES}...`;
+                        await new Promise(r => setTimeout(r, 2000 * attempt));
+                    }
 
-                if (!response.ok) {
-                    throw new Error(data.error || 'Failed to connect account');
-                }
+                    const response = await fetch('/api/create-metaapi-account', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ platform, server, login, password })
+                    });
 
-                if (!data.accountId) {
-                    throw new Error('No account ID returned from MetaAPI');
-                }
+                    const data = await response.json();
 
-                const newAccount = {
-                    id: data.accountId,
-                    platform,
-                    server,
-                    login,
-                    broker: data.broker || server,
-                    connectionStatus: data.connectionStatus || 'SYNCHRONIZED'
-                };
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to connect account');
+                    }
 
-                connectedAccount = newAccount;
-                if (data.accountInformation) {
-                    accountInfoCache[data.accountId] = {
-                        synchronized: true,
-                        accountInformation: data.accountInformation,
-                        balance: data.accountInformation.balance ?? 0,
-                        equity: data.accountInformation.equity ?? 0,
-                        profit: data.accountInformation.profit ?? 0,
-                        positions: data.positions || [],
-                        orders: data.orders || [],
-                        symbolPrices: {}
+                    if (!data.accountId) {
+                        throw new Error('No account ID returned from MetaAPI');
+                    }
+
+                    const isSynced = data.connectionStatus === 'SYNCHRONIZED';
+                    const newAccount = {
+                        id: data.accountId,
+                        platform,
+                        server,
+                        login,
+                        broker: data.broker || server,
+                        connectionStatus: data.connectionStatus || 'DEPLOYING'
                     };
-                    updateBalanceDisplay(accountInfoCache[data.accountId]);
-                    updateLiveTerminalDashboard(accountInfoCache[data.accountId]);
+
+                    connectedAccount = newAccount;
+                    if (data.accountInformation) {
+                        accountInfoCache[data.accountId] = {
+                            synchronized: true,
+                            accountInformation: data.accountInformation,
+                            balance: data.accountInformation.balance ?? 0,
+                            equity: data.accountInformation.equity ?? 0,
+                            profit: data.accountInformation.profit ?? 0,
+                            positions: data.positions || [],
+                            orders: data.orders || [],
+                            symbolPrices: {}
+                        };
+                        updateBalanceDisplay(accountInfoCache[data.accountId]);
+                        updateLiveTerminalDashboard(accountInfoCache[data.accountId]);
+                    }
+                    savedAccounts.push(newAccount);
+
+                    if (currentUser) {
+                        saveUserData();
+                    } else {
+                        safeStorage.setItem('saved_mt_accounts', JSON.stringify(savedAccounts));
+                    }
+
+                    if (isSynced) {
+                        document.getElementById('meta-dot').className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
+                        document.getElementById('meta-status-text').innerHTML = `✅ ${platform.toUpperCase()}`;
+                    } else {
+                        document.getElementById('meta-dot').className = "w-2 h-2 bg-yellow-400 rounded-full animate-pulse";
+                        document.getElementById('meta-status-text').innerHTML = `⏳ ${platform.toUpperCase()} (syncing)`;
+                    }
+                    document.getElementById('connected-account').innerHTML = `${platform.toUpperCase()} • ${server} • Login: ${login}`;
+                    document.getElementById('meta-status-panel').classList.remove('hidden');
+
+                    renderSavedAccounts();
+                    const shortId = data.accountId.substring(0, 12);
+                    if (isSynced) {
+                        showSuccessToast(`Account connected and synchronized! ID: ${shortId}...`);
+                    } else {
+                        showSuccessToast(`Account created (ID: ${shortId}...). Synchronizing with broker...`);
+                    }
+
+                    document.getElementById('mt-server').value = '';
+                    document.getElementById('mt-login').value = '';
+                    document.getElementById('mt-password').value = '';
+
+                    fetchAccountInfo(newAccount);
+                    startAccountPolling();
+                    lastError = null;
+                    break;
+                } catch (err) {
+                    lastError = err;
+                    if (attempt < MAX_RETRIES && (err.message.includes('502') || err.message.includes('try again') || err.message.includes('fetch'))) {
+                        continue;
+                    }
+                    break;
                 }
-                savedAccounts.push(newAccount);
-
-                if (currentUser) {
-                    saveUserData();
-                } else {
-                    safeStorage.setItem('saved_mt_accounts', JSON.stringify(savedAccounts));
-                }
-
-                document.getElementById('meta-dot').className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
-                document.getElementById('meta-status-text').innerHTML = `✅ ${platform.toUpperCase()}`;
-                document.getElementById('connected-account').innerHTML = `${platform.toUpperCase()} • ${server} • Login: ${login}`;
-                document.getElementById('meta-status-panel').classList.remove('hidden');
-
-                renderSavedAccounts();
-                showSuccessToast(`Account created and connected successfully! ID: ${data.accountId.substring(0, 12)}...`);
-
-                document.getElementById('mt-server').value = '';
-                document.getElementById('mt-login').value = '';
-                document.getElementById('mt-password').value = '';
-
-                fetchAccountInfo(newAccount);
-                startAccountPolling();
-            } catch (err) {
-                setBrokerSyncState(false, 'Broker synchronization failed');
-                showErrorToast(err.message);
-            } finally {
-                btn.innerHTML = origText;
-                btn.disabled = false;
-                btn.classList.remove('opacity-70');
             }
+
+            if (lastError) {
+                setBrokerSyncState(false, 'Broker synchronization failed');
+                showErrorToast(lastError.message);
+            }
+
+            btn.innerHTML = origText;
+            btn.disabled = false;
+            btn.classList.remove('opacity-70');
         }
 
         let accountPollingInterval = null;
@@ -2205,9 +2236,25 @@
                     return null;
                 }
                 const info = await res.json();
+
+                if (info.synchronized === false && info.connectionStatus) {
+                    setBrokerSyncState(false, `Account ${info.connectionStatus.toLowerCase()} — waiting for broker...`);
+                    const dotEl = document.getElementById('meta-dot');
+                    const statusEl = document.getElementById('meta-status-text');
+                    if (dotEl) dotEl.className = "w-2 h-2 bg-yellow-400 rounded-full animate-pulse";
+                    if (statusEl) statusEl.innerHTML = `⏳ ${account.platform?.toUpperCase() || 'MT'} (syncing)`;
+                    return info;
+                }
+
                 const prev = JSON.stringify(accountInfoCache[account.id] || {});
                 accountInfoCache[account.id] = info;
-                account.connectionStatus = info.synchronized ? 'SYNCHRONIZED' : account.connectionStatus;
+                if (info.synchronized) {
+                    account.connectionStatus = 'SYNCHRONIZED';
+                    const dotEl = document.getElementById('meta-dot');
+                    const statusEl = document.getElementById('meta-status-text');
+                    if (dotEl) dotEl.className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
+                    if (statusEl) statusEl.innerHTML = `✅ ${account.platform?.toUpperCase() || 'MT'}`;
+                }
                 updateBalanceDisplay(info);
                 updateLiveTerminalDashboard(info);
                 if (JSON.stringify(info) !== prev) {

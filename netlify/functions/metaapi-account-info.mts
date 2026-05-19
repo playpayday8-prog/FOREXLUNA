@@ -1,6 +1,9 @@
 import type { Config } from "@netlify/functions";
 import MetaApi from "metaapi.cloud-sdk/node";
 
+const CONNECT_TIMEOUT_SEC = 60;
+const SYNC_TIMEOUT_SEC = 60;
+
 const getPositionPrice = (position: Record<string, any>) =>
   position.currentPrice ??
   position.price ??
@@ -40,13 +43,24 @@ export default async (req: Request) => {
 
     const api = new MetaApi(token);
     const account = await api.metatraderAccountApi.getAccount(accountId);
+    const state = account.state;
 
-    await account.deploy();
-    await account.waitConnected();
+    if (state !== "DEPLOYED") {
+      await account.deploy();
+      try {
+        await account.waitConnected(CONNECT_TIMEOUT_SEC);
+      } catch {
+        return Response.json({
+          synchronized: false,
+          connectionStatus: state || "DEPLOYING",
+          message: "Account is still deploying. Please poll again shortly.",
+        });
+      }
+    }
 
     const connection = account.getRPCConnection();
     await connection.connect();
-    await connection.waitSynchronized();
+    await connection.waitSynchronized({ timeoutInSeconds: SYNC_TIMEOUT_SEC });
 
     const info = connection.terminalState.accountInformation || {};
     const positions = connection.terminalState.positions || [];
@@ -75,10 +89,14 @@ export default async (req: Request) => {
       symbolPrices: getSymbolPrices(positions, orders),
     });
   } catch (error: any) {
-    return Response.json(
-      { error: error.message || "Internal Server Error" },
-      { status: 500 }
-    );
+    const msg = error.message || "Internal Server Error";
+    if (msg.includes("ENOTFOUND") || msg.includes("ECONNREFUSED") || msg.includes("fetch failed")) {
+      return Response.json(
+        { error: "Cannot reach MetaAPI servers. Please try again in a moment." },
+        { status: 502 }
+      );
+    }
+    return Response.json({ error: msg }, { status: 500 });
   }
 };
 

@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import type { Config } from "@netlify/functions";
-import MetaApi from "metaapi.cloud-sdk/node";
+import MetaApi from "metaapi.cloud-sdk/esm-node";
 
 const CONNECT_TIMEOUT_SEC = 60;
 const SYNC_TIMEOUT_SEC = 60;

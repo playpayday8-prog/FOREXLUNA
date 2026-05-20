@@ -10,15 +10,15 @@
 
 # Production environment
 [context.production]
-  environment = { RENDER_BACKEND_URL = "https://forex-luna-backend.onrender.com" }
+  environment = { RENDER_BACKEND_URL = "https://forexluna-1.onrender.com" }
 
 # Deploy preview environment
 [context.deploy-preview]
-  environment = { RENDER_BACKEND_URL = "https://forex-luna-backend.onrender.com" }
+  environment = { RENDER_BACKEND_URL = "https://forexluna-1.onrender.com" }
 
 # Branch deploy environment
 [context.branch-deploy]
-  environment = { RENDER_BACKEND_URL = "https://forex-luna-backend.onrender.com" }
+  environment = { RENDER_BACKEND_URL = "https://forexluna-1.onrender.com" }
 
 # Headers for security
 [[headers]]

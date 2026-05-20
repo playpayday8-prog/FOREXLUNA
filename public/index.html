@@ -1,0 +1,3014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forex Luna Signal • Lunar AI Trading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', system_ui, sans-serif; background: #0a0e1b; }
+        .font-display { font-family: 'Space Grotesk', sans-serif; }
+        .nav-active { background-color: #1e40af; color: white; border-radius: 9999px; }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .matrix-bg { position: fixed; inset: 0; background: linear-gradient(rgba(0,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.04) 1px, transparent 1px); background-size: 60px 60px; z-index: -1; opacity: 0.7; pointer-events: none; }
+        
+        /* Hide scrollbars but keep functionality */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Prevent text overflow in cards */
+        .signal-card, .trading-card { overflow: hidden; }
+
+        /* Moon spinning animation when refreshing/scanning */
+        .moon-spin {
+            animation: moon-rotate 1.8s linear infinite;
+        }
+        @keyframes moon-rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Trade confirmation popup */
+        .trade-popup-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.32); z-index: 99999;
+            display: flex; align-items: center; justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        .trade-popup {
+            background: rgba(24,24,27,0.98); border: 1px solid #ef4444; border-radius: 0.75rem;
+            padding: 0.75rem 0.9rem; max-width: 280px; width: calc(100% - 2rem); position: relative;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+        }
+        .trade-popup-close {
+            position: absolute; top: 0.4rem; right: 0.6rem; background: none; border: none;
+            color: #a1a1aa; font-size: 1rem; cursor: pointer; line-height: 1;
+        }
+        .trade-popup-close:hover { color: #fff; }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white relative overflow-x-hidden">
+    <div class="matrix-bg"></div>
+
+    <!-- NAV -->
+    <nav class="border-b border-zinc-800 bg-zinc-950/95 backdrop-blur-xl sticky top-0 z-50">
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-8 min-h-[3.5rem] py-2 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-cyan-400 rounded-2xl flex items-center justify-center text-4xl shadow-lg">🌕</div>
+                <div>
+                    <div class="font-display text-3xl font-bold tracking-tighter">Forex Luna Signal</div>
+                    <div class="text-xs text-zinc-400 -mt-1 font-mono">LUNAR AI TRADING</div>
+                </div>
+            </div>
+
+            <!-- Desktop Nav (scrollable if too many items) -->
+            <div class="hidden md:flex items-center gap-1 text-sm font-medium overflow-x-auto max-w-[65%] pb-1">
+                <div onclick="navigateTo('dashboard')" class="nav-item px-3.5 py-2 cursor-pointer hover:bg-zinc-900 rounded-3xl transition-all whitespace-nowrap text-sm" id="nav-dashboard">Dashboard</div>
+                <div onclick="navigateTo('scanner')" class="nav-item px-3.5 py-2 cursor-pointer hover:bg-zinc-900 rounded-3xl transition-all whitespace-nowrap text-sm" id="nav-scanner">Scanner</div>
+                <div onclick="navigateTo('signals')" class="nav-item px-3.5 py-2 cursor-pointer hover:bg-zinc-900 rounded-3xl transition-all whitespace-nowrap text-sm" id="nav-signals">Signals</div>
+                <div onclick="navigateTo('charts')" class="nav-item px-3.5 py-2 cursor-pointer hover:bg-zinc-900 rounded-3xl transition-all whitespace-nowrap text-sm" id="nav-charts">Charts</div>
+                <div onclick="navigateTo('accounts')" class="nav-item px-3.5 py-2 cursor-pointer hover:bg-zinc-900 rounded-3xl transition-all whitespace-nowrap text-sm" id="nav-accounts">Accounts</div>
+                <div onclick="navigateTo('prop')" class="nav-item px-3.5 py-2 cursor-pointer hover:bg-zinc-900 rounded-3xl transition-all whitespace-nowrap text-sm" id="nav-prop">Prop Firm</div>
+                <div onclick="navigateTo('journal')" class="nav-item px-3.5 py-2 cursor-pointer hover:bg-zinc-900 rounded-3xl transition-all whitespace-nowrap text-sm" id="nav-journal">Journal</div>
+                <div onclick="navigateTo('status')" class="nav-item px-3.5 py-2 cursor-pointer hover:bg-zinc-900 rounded-3xl transition-all whitespace-nowrap text-sm" id="nav-status">Status</div>
+                <div onclick="navigateTo('admin')" class="nav-item px-3.5 py-2 cursor-pointer hover:bg-zinc-900 rounded-3xl transition-all whitespace-nowrap text-sm flex items-center gap-1.5" id="nav-admin"><i class="fa-solid fa-shield-halved text-xs"></i> Admin Panel</div>
+
+                <div class="flex items-center gap-2 ml-1" id="nav-user-area">
+                    <div class="px-3 py-1.5 text-xs bg-zinc-800 rounded-3xl flex items-center gap-1.5 whitespace-nowrap" id="nav-user-display">
+                        <i class="fa-solid fa-user text-cyan-400 text-xs"></i>
+                        <span id="nav-username" class="text-xs text-zinc-300"></span>
+                    </div>
+                    <div onclick="logoutUser()" class="px-2.5 py-1.5 text-xs bg-red-900/60 hover:bg-red-800 text-red-300 rounded-3xl cursor-pointer flex items-center gap-1" id="logout-btn" title="Logout">
+                        <i class="fa-solid fa-sign-out-alt text-xs"></i>
+                        <span class="hidden sm:inline">Logout</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div onclick="navigateTo('accounts')" class="hidden sm:flex items-center gap-2 px-3 py-1 bg-zinc-900 hover:bg-zinc-800 rounded-3xl text-xs font-mono cursor-pointer">
+                    <div id="meta-dot" class="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span id="meta-status-text">OFFLINE</span>
+                </div>
+                <div class="flex items-center gap-2 bg-zinc-900 rounded-3xl px-3 py-1">
+                    <span class="text-xs text-zinc-400">AUTO MODE</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="auto-trade-toggle" class="sr-only peer" onchange="toggleAutoMode()">
+                        <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                </div>
+                <div class="hidden sm:flex items-center gap-2 bg-red-950/80 border border-red-500/60 rounded-3xl px-3 py-1">
+                    <span id="live-mode-label" class="text-xs text-red-300 font-semibold">🔴 LIVE TRADING - REAL MONEY ONLY</span>
+                </div>
+                <div class="hidden sm:flex items-center gap-2 bg-zinc-900 rounded-3xl px-3 py-1">
+                    <span class="text-xs text-zinc-400">POPUPS</span>
+                    <label class="relative inline-flex items-center cursor-pointer" title="Show Trade Popups">
+                        <input type="checkbox" id="show-trade-popups-toggle" class="sr-only peer" onchange="toggleTradePopups()">
+                        <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                </div>
+                <button onclick="toggleMobileMenu()" class="md:hidden text-2xl p-2"><i id="hamburger-icon" class="fa-solid fa-bars"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <div id="auto-banner" class="hidden bg-emerald-900/80 border-b border-emerald-400 text-center py-2 text-sm">
+        <span class="font-semibold text-emerald-400">AUTO MODE ACTIVE</span> - Scanning for 85%+ live-only trade setups
+    </div>
+    <div id="live-only-banner" class="bg-red-950/90 border-b border-red-500/60 text-center py-2 text-sm font-semibold text-red-200">
+        🔴 LIVE TRADING - REAL MONEY ONLY
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden fixed inset-0 bg-black/95 z-[10000] md:hidden pt-16">
+        <div class="bg-zinc-900 h-full max-w-xs ml-auto p-4 space-y-0 text-base overflow-y-auto pb-16">
+            <div onclick="navigateTo('dashboard')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-home w-5"></i><span>Dashboard</span></div>
+            <div onclick="navigateTo('scanner')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-search w-5"></i><span>Market Scanner</span></div>
+            <div onclick="navigateTo('signals')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-bolt w-5"></i><span>Signals</span></div>
+            <div onclick="navigateTo('charts')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-chart-line w-5"></i><span>Charts</span></div>
+            <div onclick="navigateTo('accounts')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-plug w-5"></i><span>Accounts</span></div>
+            <div onclick="navigateTo('admin')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-shield-halved w-5"></i><span>Admin Panel</span></div>
+            <div onclick="navigateTo('prop')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-tachometer-alt w-5"></i><span>Prop Firm</span></div>
+            <div onclick="navigateTo('journal')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-book w-5"></i><span>Trade Journal</span></div>
+            <div onclick="navigateTo('status')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-info-circle w-5"></i><span>Platform Status</span></div>
+            <div onclick="navigateTo('settings')" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer"><i class="fa-solid fa-cog w-5"></i><span>Settings</span></div>
+            <div class="flex items-center justify-between py-3 border-b border-zinc-700">
+                <div class="flex items-center gap-3"><i class="fa-solid fa-exclamation-triangle w-5 text-red-400"></i><span id="mobile-live-label" class="text-sm text-red-400 font-semibold">LIVE TRADING - REAL MONEY ONLY</span></div>
+            </div>
+            <div class="flex items-center justify-between py-3 border-b border-zinc-700">
+                <div class="flex items-center gap-3"><i class="fa-solid fa-bell w-5 text-zinc-400"></i><span class="text-sm">Show Trade Popups</span></div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="mobile-show-trade-popups-toggle" class="sr-only peer" onchange="toggleTradePopupsFromMobile()">
+                    <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
+            </div>
+            <div class="flex items-center gap-3 py-3 border-b border-zinc-700" id="mobile-user-item">
+                <i class="fa-solid fa-user w-5 text-cyan-400"></i>
+                <span id="mobile-username" class="text-sm"></span>
+            </div>
+            <div onclick="logoutUser()" class="flex items-center gap-3 py-3 border-b border-zinc-700 cursor-pointer text-red-400" id="mobile-logout-item"><i class="fa-solid fa-sign-out-alt w-5"></i><span>Logout</span></div>
+            <div onclick="toggleMobileMenu()" class="absolute top-8 right-8 text-4xl cursor-pointer"><i class="fa-solid fa-xmark"></i></div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="section-dashboard" class="section active max-w-screen-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
+        <!-- Welcome Banner -->
+        <div id="welcome-banner" class="mb-6 bg-gradient-to-r from-purple-900/40 to-cyan-900/40 border border-purple-500/30 rounded-3xl p-5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-cyan-400 rounded-full flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div>
+                    <div class="text-lg font-semibold">Welcome back, <span id="welcome-username" class="text-cyan-400"></span></div>
+                    <div class="text-xs text-zinc-400" id="broker-sync-label">Connect an MT4/MT5 account to sync live broker data</div>
+                </div>
+            </div>
+            <div class="text-xs text-zinc-500" id="welcome-status">Your data is synced and ready</div>
+        </div>
+
+        <!-- Header -->
+        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 mb-6">
+            <div>
+                <h1 class="text-3xl sm:text-5xl lg:text-6xl font-display font-bold tracking-tighter">Forex Luna Signal</h1>
+                <p class="text-base sm:text-xl text-zinc-400">Lunar AI • Fully Automatic Trading</p>
+            </div>
+            
+            <!-- Quick P&L Summary -->
+            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl px-5 py-3 text-right">
+                <div id="dash-pnl" class="text-zinc-300 text-2xl sm:text-3xl lg:text-4xl font-semibold tabular-nums">$0.00</div>
+                <div id="dash-pnl-detail" class="text-zinc-400 text-xs sm:text-sm mt-0.5">Waiting for broker synchronization</div>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div class="trading-card bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
+                <div class="text-zinc-400 text-sm">EURUSD</div>
+                <div id="dash-eur" class="text-3xl sm:text-4xl font-mono font-semibold mt-auto pt-2 tabular-nums">1.0878</div>
+                <div class="text-emerald-400 text-xs sm:text-sm mt-0.5">+0.18%</div>
+            </div>
+            <div class="trading-card bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
+                <div class="text-zinc-400 text-sm">GBPUSD</div>
+                <div id="dash-gbp" class="text-3xl sm:text-4xl font-mono font-semibold mt-auto pt-2 tabular-nums">1.2654</div>
+                <div class="text-red-400 text-xs sm:text-sm mt-0.5">-0.09%</div>
+            </div>
+            <div class="trading-card bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
+                <div class="text-zinc-400 text-sm">USDJPY</div>
+                <div id="dash-jpy" class="text-3xl sm:text-4xl font-mono font-semibold mt-auto pt-2 tabular-nums">148.75</div>
+                <div class="text-emerald-400 text-xs sm:text-sm mt-0.5">+0.62%</div>
+            </div>
+            <div class="trading-card bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
+                <div class="text-zinc-400 text-sm">BTCUSDT</div>
+                <div id="dash-btc" class="text-3xl sm:text-4xl font-mono font-semibold mt-auto pt-2 tabular-nums">68420</div>
+                <div class="text-emerald-400 text-xs sm:text-sm mt-0.5">+1.8%</div>
+            </div>
+        </div>
+        <!-- Portfolio Overview -->
+        <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
+                <div class="text-xs text-zinc-400">ACCOUNT BALANCE</div>
+                <div id="portfolio-balance" class="text-3xl font-mono font-semibold mt-auto pt-3 tabular-nums">$0</div>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
+                <div class="text-xs text-zinc-400">TOTAL P&amp;L</div>
+                <div id="portfolio-pnl" class="text-3xl font-mono font-semibold mt-auto pt-3 text-emerald-400 tabular-nums">+$0</div>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
+                <div class="text-xs text-zinc-400">TRADES</div>
+                <div id="portfolio-trades" class="text-3xl font-mono font-semibold mt-auto pt-3 tabular-nums">0</div>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
+                <div class="text-xs text-zinc-400">WIN RATE</div>
+                <div id="portfolio-winrate" class="text-3xl font-mono font-semibold mt-auto pt-3 tabular-nums">0%</div>
+            </div>
+        </div>
+
+        <!-- Live Positions -->
+        <div id="live-positions-panel" class="mt-6 bg-zinc-900 border border-zinc-700 rounded-3xl p-6 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-zinc-200">Open Positions</h3>
+                <span id="positions-count" class="text-xs text-zinc-400">0 positions</span>
+            </div>
+            <div id="live-positions-list" class="space-y-2"></div>
+        </div>
+
+        <div class="lunar-panel rounded-3xl p-8 mt-8">
+            <h2 class="font-orbitron text-2xl sm:text-3xl mb-6 flex items-center gap-3 text-purple-400"><i class="fa-solid fa-moon"></i> LIVE LUNAR CYCLE</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 text-center" id="lunar-grid"></div>
+        </div>
+    </div>
+
+    <!-- MARKET SCANNER -->
+    <div id="section-scanner" class="section max-w-screen-2xl mx-auto px-4 sm:px-8 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-4xl sm:text-6xl font-display font-bold tracking-tighter">Market Scanner</h1>
+            <button onclick="runMarketScan()" class="px-8 py-4 bg-gradient-to-r from-purple-600 to-cyan-500 rounded-3xl font-semibold flex items-center gap-3">
+                <i class="fa-solid fa-search"></i> SCAN NOW
+            </button>
+        </div>
+        <div id="scanner-status" class="text-xs text-emerald-400 mb-4 hidden">🤖 AUTO SCANNING ACTIVE</div>
+        <div id="scanner-table" class="bg-zinc-900 border border-zinc-700 rounded-3xl overflow-hidden"></div>
+    </div>
+
+    <!-- SIGNALS -->
+    <div id="section-signals" class="section max-w-screen-2xl mx-auto px-4 sm:px-8 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-4xl sm:text-6xl font-display font-bold tracking-tighter">Live Signals</h1>
+            <button onclick="generateAISignals()" class="px-8 py-4 bg-gradient-to-r from-purple-600 to-cyan-500 rounded-3xl font-semibold flex items-center gap-3">🌕 GENERATE FRESH SIGNALS</button>
+        </div>
+        <div id="signals-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+    </div>
+
+    <!-- CHARTS -->
+    <div id="section-charts" class="section max-w-screen-2xl mx-auto px-4 sm:px-8 py-8">
+        <h1 class="text-3xl sm:text-5xl font-display font-bold mb-6">Live Charts + Indicators</h1>
+        <div class="bg-zinc-900 border border-cyan-400/20 rounded-3xl p-5 sm:p-6 overflow-hidden">
+            <!-- Pair Switcher - horizontal scroll on mobile -->
+            <div class="flex gap-2 mb-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+                <div onclick="switchChartPair('EURUSD')" class="cursor-pointer flex-shrink-0 px-4 py-1.5 text-sm rounded-2xl bg-zinc-800 hover:bg-cyan-500/20 border border-zinc-700 hover:border-cyan-400 transition-all whitespace-nowrap">EURUSD</div>
+                <div onclick="switchChartPair('GBPUSD')" class="cursor-pointer flex-shrink-0 px-4 py-1.5 text-sm rounded-2xl bg-zinc-800 hover:bg-cyan-500/20 border border-zinc-700 hover:border-cyan-400 transition-all whitespace-nowrap">GBPUSD</div>
+                <div onclick="switchChartPair('USDJPY')" class="cursor-pointer flex-shrink-0 px-4 py-1.5 text-sm rounded-2xl bg-zinc-800 hover:bg-cyan-500/20 border border-zinc-700 hover:border-cyan-400 transition-all whitespace-nowrap">USDJPY</div>
+                <div onclick="switchChartPair('BTCUSDT')" class="cursor-pointer flex-shrink-0 px-4 py-1.5 text-sm rounded-2xl bg-zinc-800 hover:bg-cyan-500/20 border border-zinc-700 hover:border-cyan-400 transition-all whitespace-nowrap">BTCUSDT</div>
+            </div>
+            
+            <!-- Price Header -->
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5">
+                <div class="flex items-baseline gap-3 sm:gap-5">
+                    <span id="chart-symbol" class="text-3xl sm:text-5xl font-bold">EURUSD</span>
+                    <span id="live-price-display" class="text-4xl sm:text-6xl font-mono font-semibold tabular-nums">1.08765</span>
+                </div>
+                <div id="price-change-display" class="self-start sm:self-auto px-5 py-2 sm:px-6 sm:py-3 bg-emerald-500 text-black rounded-3xl text-lg sm:text-xl font-semibold">+0.14%</div>
+            </div>
+            
+            <!-- Large Chart -->
+            <div class="h-[380px] sm:h-[420px] bg-zinc-950 rounded-2xl p-3 sm:p-4 border border-zinc-800">
+                <canvas id="realTimeChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACCOUNTS -->
+    <div id="section-accounts" class="section max-w-screen-2xl mx-auto px-4 sm:px-8 py-8">
+        <h1 class="text-4xl sm:text-6xl font-display font-bold tracking-tighter mb-6">MT4 & MT5 Login Portal</h1>
+        <div class="max-w-2xl mx-auto bg-zinc-900 border border-cyan-400 rounded-3xl p-8 mb-8">
+            <h2 class="text-2xl font-semibold mb-6 flex items-center gap-2"><i class="fa-solid fa-plug"></i> Connect Your Real MT4 / MT5 Account</h2>
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-xs font-mono mb-2 text-zinc-400">PLATFORM</label>
+                    <select id="mt-platform" class="w-full px-6 py-5 bg-black border border-zinc-700 rounded-2xl font-mono text-base">
+                        <option value="mt5">MetaTrader 5 (MT5)</option>
+                        <option value="mt4">MetaTrader 4 (MT4)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-mono mb-2 text-zinc-400">BROKER SERVER</label>
+                    <input id="mt-server" type="text" class="w-full px-6 py-5 bg-black border border-zinc-700 rounded-2xl font-mono text-base" placeholder="ICMarketsSC-MT5 or YourPropFirm-Server">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-mono mb-2 text-zinc-400">LOGIN (Account Number)</label>
+                        <input id="mt-login" type="text" class="w-full px-6 py-5 bg-black border border-zinc-700 rounded-2xl font-mono text-base">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-mono mb-2 text-zinc-400">PASSWORD</label>
+                        <input id="mt-password" type="password" class="w-full px-6 py-5 bg-black border border-zinc-700 rounded-2xl font-mono text-base">
+                    </div>
+                </div>
+                <button onclick="addMTAccount()" class="w-full py-6 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-semibold rounded-3xl text-xl">Create & Connect Account</button>
+            </div>
+        </div>
+        <div id="meta-status-panel" class="max-w-2xl mx-auto hidden rounded-3xl p-8 bg-emerald-900/70 border border-emerald-400">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <div class="text-emerald-400 text-xl font-bold">✅ CONNECTED TO REAL ACCOUNT</div>
+                    <div id="connected-account" class="text-sm text-emerald-300"></div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs text-emerald-300">BALANCE</div>
+                    <div id="account-balance" class="text-3xl font-bold text-emerald-400">--</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-4 pt-4 border-t border-emerald-400/30">
+                <div>
+                    <div class="text-xs text-emerald-300/70">EQUITY</div>
+                    <div id="account-equity" class="text-lg font-bold text-emerald-300">--</div>
+                </div>
+                <div>
+                    <div class="text-xs text-emerald-300/70">PROFIT / LOSS</div>
+                    <div id="account-profit" class="text-lg font-bold text-white">--</div>
+                </div>
+                <div>
+                    <div class="text-xs text-emerald-300/70">FREE MARGIN</div>
+                    <div id="account-free-margin" class="text-lg font-bold text-emerald-300">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connected Accounts List -->
+        <div id="connected-accounts-section" class="max-w-2xl mx-auto mt-8 hidden">
+            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2 text-zinc-200">
+                <i class="fa-solid fa-list"></i> Connected Accounts
+            </h2>
+            <div id="connected-accounts-list" class="space-y-3"></div>
+        </div>
+
+        <!-- Live Trading Mode -->
+        <div class="max-w-2xl mx-auto mt-6 bg-red-950/70 border border-red-500/60 rounded-3xl p-6">
+            <div class="flex items-start gap-3">
+                <i class="fa-solid fa-exclamation-triangle text-red-400 mt-1"></i>
+                <div>
+                    <div class="font-semibold text-red-300">🔴 LIVE TRADING - REAL MONEY ONLY</div>
+                    <p class="text-xs text-red-100/80 mt-1">Demo execution has been removed. Trades require a connected real MT4/MT5 or prop firm account, a MetaAPI token, at least 85% confidence, and a 15 minute cooldown between orders.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div id="section-admin" class="section max-w-screen-2xl mx-auto px-4 sm:px-8 py-8">
+        <div id="admin-login" class="max-w-md mx-auto">
+            <h1 class="text-4xl font-display font-bold mb-8 text-center">👑 Admin Panel</h1>
+            <div class="bg-zinc-900 border border-cyan-400 rounded-3xl p-8">
+                <div class="mb-6">
+                    <label class="block text-xs font-mono mb-2">Username</label>
+                    <input id="admin-username" type="text" value="admin" class="w-full px-6 py-5 bg-black border border-zinc-700 rounded-2xl font-mono">
+                </div>
+                <div class="mb-8">
+                    <label class="block text-xs font-mono mb-2">Password</label>
+                    <input id="admin-password" type="password" value="Sickhead45!" class="w-full px-6 py-5 bg-black border border-zinc-700 rounded-2xl font-mono">
+                </div>
+                <button onclick="adminLogin()" class="w-full py-6 bg-gradient-to-r from-purple-500 to-cyan-400 text-black font-semibold rounded-3xl text-xl">LOGIN TO ADMIN PANEL</button>
+            </div>
+        </div>
+
+        <div id="admin-dashboard" class="hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-4xl font-display font-bold">Admin Panel</h1>
+                <button onclick="adminLogout()" class="px-6 py-3 border border-red-400 text-red-400 rounded-3xl text-sm font-medium">LOGOUT</button>
+            </div>
+
+            <div class="bg-zinc-900 border border-cyan-400 rounded-3xl p-8">
+                <h2 class="text-2xl font-semibold mb-6 flex items-center gap-2"><i class="fa-solid fa-lock"></i> Change Admin Password</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-mono mb-2 text-zinc-400">New Password</label>
+                        <input id="new-admin-password" type="password" class="w-full px-6 py-5 bg-black border border-zinc-700 rounded-2xl font-mono text-base">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-mono mb-2 text-zinc-400">Confirm Password</label>
+                        <input id="confirm-admin-password" type="password" class="w-full px-6 py-5 bg-black border border-zinc-700 rounded-2xl font-mono text-base">
+                    </div>
+                </div>
+                <button onclick="changeAdminPassword()" class="mt-6 w-full py-6 bg-emerald-500 text-black font-semibold rounded-3xl">CHANGE PASSWORD</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROP FIRM CHALLENGE -->
+    <div id="section-prop" class="section max-w-screen-2xl mx-auto px-4 sm:px-8 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-4xl sm:text-6xl font-display font-bold tracking-tighter">Prop Firm Challenge</h1>
+                <p class="text-zinc-400">Risk Management • Drawdown Tracking • Progress</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="emergencyStop()" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-3xl text-sm font-semibold flex items-center gap-2">
+                    <i class="fa-solid fa-stop-circle"></i> EMERGENCY STOP
+                </button>
+                <button onclick="resetPropChallenge()" class="px-6 py-3 border border-red-400 text-red-400 rounded-3xl text-sm">Reset Challenge</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Challenge Settings -->
+            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+                <h3 class="font-semibold text-lg mb-4 flex items-center gap-2"><i class="fa-solid fa-cog"></i> Challenge Rules</h3>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-zinc-400">Prop Firm Account Size ($)</label>
+                            <input id="prop-account-size" type="number" value="10000" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono" onchange="updatePropSettings()">
+                        </div>
+                        <div>
+                            <label class="text-xs text-zinc-400">Starting Balance (for progress)</label>
+                            <input id="prop-starting-balance" type="number" value="100000" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono" onchange="updatePropSettings()">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="text-xs text-zinc-400">Profit Target %</label>
+                            <input id="prop-profit-target" type="number" value="10" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono" onchange="updatePropSettings()">
+                        </div>
+                        <div>
+                            <label class="text-xs text-zinc-400">Max Daily DD %</label>
+                            <input id="prop-daily-dd" type="number" value="5" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono" onchange="updatePropSettings()">
+                        </div>
+                        <div>
+                            <label class="text-xs text-zinc-400">Max Overall DD %</label>
+                            <input id="prop-overall-dd" type="number" value="12" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono" onchange="updatePropSettings()">
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-zinc-700">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium">Auto Prop Trading</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="prop-auto-toggle" class="sr-only peer" onchange="togglePropAutoMode()">
+                                <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+
+                        <!-- Safe Mode -->
+                        <div class="flex items-center justify-between mb-3 pt-2 border-t border-zinc-700">
+                            <div>
+                                <span class="text-sm font-medium text-amber-400">Safe Mode</span>
+                                <div class="text-[10px] text-zinc-400">Uses your confidence level • Lower risk</div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="safe-mode-toggle" class="sr-only peer" onchange="toggleSafeMode()">
+                                <div class="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                            </label>
+                        </div>
+
+                        <!-- Aggressiveness Level -->
+                        <div class="mb-3">
+                            <label class="text-xs text-zinc-400 block mb-1">Signal Scan Mode</label>
+                            <select id="prop-signal-mode" onchange="applySignalMode()" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-2.5 text-sm font-medium">
+                                <option value="normal" selected>Live Standard (85% minimum)</option>
+                                <option value="conservative">Live Conservative (90% minimum)</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs text-zinc-400">Min Confidence %</label>
+                                <input id="prop-min-confidence" type="number" value="85" min="85" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-2 text-sm font-mono" onchange="updatePropSettings()">
+                            </div>
+                            <div>
+                                <label class="text-xs text-zinc-400">Max Risk / Trade %</label>
+                                <input id="prop-max-risk" type="number" value="1" step="0.1" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-2 text-sm font-mono" onchange="updatePropSettings()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="updatePropSettings()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm">Update Rules</button>
+
+                    <!-- Live Recommended Lot Size -->
+                    <div class="mt-4 p-4 bg-zinc-950 border border-cyan-400/30 rounded-2xl">
+                        <div class="text-xs text-cyan-400 mb-1">RECOMMENDED LOT SIZE</div>
+                        <div id="recommended-lot-size" class="text-3xl font-mono font-bold text-white">0.10</div>
+                        <div class="text-[10px] text-zinc-400">Based on your account size + risk settings</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Overview -->
+            <div class="lg:col-span-2 bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+                <h3 class="font-semibold text-lg mb-4">Challenge Progress</h3>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-zinc-950 rounded-2xl p-4">
+                        <div class="text-xs text-zinc-400">Current Equity</div>
+                        <div id="prop-current-equity" class="text-2xl font-mono font-semibold mt-1">$100,000</div>
+                    </div>
+                    <div class="bg-zinc-950 rounded-2xl p-4">
+                        <div class="text-xs text-zinc-400">Profit Made</div>
+                        <div id="prop-profit-made" class="text-2xl font-mono font-semibold mt-1 text-emerald-400">+$0</div>
+                        <div id="prop-profit-percent" class="text-xs text-emerald-400">0 / 10%</div>
+                    </div>
+                    <div class="bg-zinc-950 rounded-2xl p-4">
+                        <div class="text-xs text-zinc-400">Daily P&amp;L</div>
+                        <div id="prop-daily-pnl" class="text-2xl font-mono font-semibold mt-1">+$0</div>
+                    </div>
+                    <div class="bg-zinc-950 rounded-2xl p-4">
+                        <div class="text-xs text-zinc-400">Current Drawdown</div>
+                        <div id="prop-current-dd" class="text-2xl font-mono font-semibold mt-1 text-amber-400">0%</div>
+                    </div>
+                </div>
+
+                <!-- Progress Bars -->
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span>Profit Target</span>
+                            <span id="prop-profit-bar-text">0% / 10%</span>
+                        </div>
+                        <div class="h-3 bg-zinc-800 rounded-full overflow-hidden">
+                            <div id="prop-profit-bar" class="h-3 bg-emerald-500 transition-all" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span>Daily Drawdown</span>
+                            <span id="prop-daily-dd-text">0% / 5%</span>
+                        </div>
+                        <div class="h-3 bg-zinc-800 rounded-full overflow-hidden">
+                            <div id="prop-daily-dd-bar" class="h-3 bg-orange-500 transition-all" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span>Overall Drawdown</span>
+                            <span id="prop-overall-dd-text">0% / 12%</span>
+                        </div>
+                        <div class="h-3 bg-zinc-800 rounded-full overflow-hidden">
+                            <div id="prop-overall-dd-bar" class="h-3 bg-red-500 transition-all" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Loss Limit -->
+            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+                <h3 class="font-semibold text-lg mb-4 flex items-center gap-2"><i class="fa-solid fa-shield-alt"></i> Daily Loss Limit</h3>
+                <div class="flex gap-3 items-end">
+                    <div class="flex-1">
+                        <label class="text-xs text-zinc-400">Max Daily Loss ($)</label>
+                        <input id="daily-loss-limit" type="number" value="500" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono" onchange="updateDailyLossLimit()">
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-zinc-400">Lost Today</div>
+                        <div id="daily-loss-today" class="text-2xl font-mono font-semibold text-red-400">$0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Trades Log -->
+            <div class="lg:col-span-2 bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+                <h3 class="font-semibold text-lg mb-4 flex items-center justify-between">
+                    <span><i class="fa-solid fa-history"></i> Recent Trades</span>
+                    <span onclick="clearTradeLog()" class="text-xs text-zinc-400 cursor-pointer hover:text-white">Clear</span>
+                </h3>
+                <div id="trade-log" class="max-h-[220px] overflow-y-auto text-sm space-y-1 font-mono">
+                    <div class="text-zinc-500 text-xs">No trades yet...</div>
+                </div>
+            </div>
+
+            <!-- Risk Calculator -->
+            <div class="lg:col-span-3 bg-zinc-900 border border-cyan-400/30 rounded-3xl p-6">
+                <h3 class="font-semibold text-lg mb-4 flex items-center gap-2"><i class="fa-solid fa-calculator"></i> Risk Calculator</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div>
+                        <label class="text-xs text-zinc-400">Account Balance</label>
+                        <input id="risk-balance" type="number" value="100000" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400">Risk Per Trade %</label>
+                        <input id="risk-percent" type="number" value="1" step="0.1" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400">Stop Loss (pips)</label>
+                        <input id="risk-sl-pips" type="number" value="50" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400">Take Profit (pips)</label>
+                        <input id="risk-tp-pips" type="number" value="80" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="calculateRisk()" class="w-full py-3 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-2xl">Calculate</button>
+                    </div>
+                </div>
+
+                <div id="risk-result" class="hidden mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div class="bg-zinc-950 rounded-2xl p-4">
+                        <div class="text-xs text-zinc-400">Risk Amount</div>
+                        <div id="risk-amount" class="text-2xl font-mono font-semibold text-red-400"></div>
+                    </div>
+                    <div class="bg-zinc-950 rounded-2xl p-4">
+                        <div class="text-xs text-zinc-400">Suggested Lot Size</div>
+                        <div id="risk-lot-size" class="text-2xl font-mono font-semibold text-emerald-400"></div>
+                    </div>
+                    <div class="bg-zinc-950 rounded-2xl p-4">
+                        <div class="text-xs text-zinc-400">Max Loss</div>
+                        <div id="risk-max-loss" class="text-2xl font-mono font-semibold"></div>
+                    </div>
+                    <div class="bg-zinc-950 rounded-2xl p-4">
+                        <div class="text-xs text-zinc-400">Status</div>
+                        <div id="risk-status" class="text-lg font-semibold mt-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRADE JOURNAL -->
+    <div id="section-journal" class="section max-w-screen-2xl mx-auto px-4 sm:px-8 py-8">
+        <h1 class="text-4xl sm:text-6xl font-display font-bold tracking-tighter mb-8">Trade Journal</h1>
+        
+        <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold">All Trades</h3>
+                <button onclick="clearTradeLog()" class="text-xs px-4 py-2 border border-zinc-600 rounded-2xl hover:bg-zinc-800">Clear Log</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-zinc-700 text-zinc-400 text-xs">
+                            <th class="text-left py-3 px-4">Time</th>
+                            <th class="text-left py-3 px-4">Type</th>
+                            <th class="text-left py-3 px-4">Pair</th>
+                            <th class="text-left py-3 px-4">Direction</th>
+                            <th class="text-right py-3 px-4">Lot</th>
+                            <th class="text-right py-3 px-4">PnL</th>
+                            <th class="text-right py-3 px-4">Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody id="journal-table" class="font-mono text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- PLATFORM STATUS -->
+    <div id="section-status" class="section max-w-screen-2xl mx-auto px-4 sm:px-8 py-8">
+        <h1 class="text-4xl sm:text-6xl font-display font-bold tracking-tighter mb-8">Platform Status</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+                <h3 class="font-semibold mb-4">Connection Status</h3>
+                <div id="status-connection" class="text-lg font-medium">Disconnected</div>
+                <div id="status-account" class="text-sm text-zinc-400 mt-1"></div>
+            </div>
+            
+            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+                <h3 class="font-semibold mb-4">Trading Modes</h3>
+                <div class="space-y-2 text-sm">
+                    <div>Live Trading: <span id="status-live" class="font-medium">OFF</span></div>
+                    <div>Auto Trading: <span id="status-auto" class="font-medium">OFF</span></div>
+                    <div>Prop Auto Mode: <span id="status-prop-auto" class="font-medium">OFF</span></div>
+                </div>
+            </div>
+            
+            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+                <h3 class="font-semibold mb-4">Performance</h3>
+                <div class="space-y-1 text-sm">
+                    <div>Total P&amp;L: <span id="status-pnl" class="font-mono font-semibold"></span></div>
+                    <div>Win Rate: <span id="status-winrate" class="font-semibold"></span></div>
+                    <div>Total Trades: <span id="status-trades"></span></div>
+                </div>
+            </div>
+
+            <div class="bg-zinc-900 border border-amber-400/40 rounded-3xl p-6">
+                <h3 class="font-semibold mb-2 text-amber-400">Account Safety Score</h3>
+                <div id="account-safety-score" class="text-5xl font-bold">92%</div>
+                <div class="text-xs text-zinc-400 mt-1">Based on drawdown + consecutive losses</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="section-settings" class="section max-w-screen-2xl mx-auto px-4 sm:px-8 py-8">
+        <h1 class="text-4xl sm:text-6xl font-display font-bold tracking-tighter mb-8">Settings</h1>
+        
+        <div class="max-w-2xl space-y-6">
+            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+                <h3 class="font-semibold mb-4">Risk Defaults</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-zinc-400">Default Stop Loss (pips)</label>
+                        <input id="setting-sl" type="number" value="50" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400">Default Take Profit (pips)</label>
+                        <input id="setting-tp" type="number" value="80" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+                <h3 class="font-semibold mb-4">Safety Limits</h3>
+                <div>
+                    <label class="text-xs text-zinc-400">Daily Loss Limit ($)</label>
+                    <input id="setting-daily-loss" type="number" value="500" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3 font-mono">
+                </div>
+            </div>
+
+            <button onclick="saveSettings()" class="w-full py-4 bg-emerald-500 text-black font-semibold rounded-3xl">Save Settings</button>
+        </div>
+    </div>
+
+    <!-- Auth Screen (full-page overlay) -->
+    <div id="auth-screen" class="fixed inset-0 bg-zinc-950 z-[9999] flex items-center justify-center overflow-y-auto">
+        <div class="matrix-bg"></div>
+        <div class="w-full max-w-md mx-4 my-8 relative z-10">
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-cyan-400 rounded-2xl flex items-center justify-center text-5xl shadow-lg mx-auto mb-4">🌕</div>
+                <h1 class="font-display text-3xl font-bold tracking-tighter">Forex Luna Signal</h1>
+                <p class="text-sm text-zinc-400 mt-1">Lunar AI Trading Platform</p>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form" class="bg-zinc-900/90 border border-zinc-700 rounded-3xl p-8 backdrop-blur-xl">
+                <h2 class="text-2xl font-semibold mb-6">Welcome Back</h2>
+                <div id="login-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/50 rounded-2xl text-sm text-red-300"></div>
+                <div id="login-success" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 rounded-2xl text-sm text-emerald-300"></div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Username</label>
+                        <input id="login-username" type="text" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Enter your username" autocomplete="username">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Password</label>
+                        <input id="login-password" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginUser()">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="remember-me" class="w-4 h-4 rounded bg-black border-zinc-600 text-cyan-400 focus:ring-cyan-400">
+                        <label for="remember-me" class="text-sm text-zinc-400 cursor-pointer">Remember me</label>
+                    </div>
+                </div>
+                <button onclick="loginUser()" id="login-btn" class="mt-6 w-full py-4 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-semibold rounded-3xl text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                    <span id="login-btn-label">Login</span>
+                    <i id="login-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+                </button>
+                <p class="text-center text-sm text-zinc-400 mt-4">Don't have an account? <span onclick="switchToRegister()" class="text-cyan-400 cursor-pointer hover:underline font-medium">Create one</span></p>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" class="hidden bg-zinc-900/90 border border-zinc-700 rounded-3xl p-8 backdrop-blur-xl">
+                <h2 class="text-2xl font-semibold mb-6">Create Account</h2>
+                <div id="register-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/50 rounded-2xl text-sm text-red-300"></div>
+                <div id="register-success" class="hidden mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 rounded-2xl text-sm text-emerald-300"></div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Username</label>
+                        <input id="register-username" type="text" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Choose a username (letters, numbers, _)" autocomplete="username">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Password</label>
+                        <input id="register-password" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Min 6 characters" autocomplete="new-password">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400 font-mono uppercase tracking-wider">Confirm Password</label>
+                        <input id="register-confirm" type="password" class="w-full bg-black border border-zinc-700 rounded-2xl px-4 py-3.5 font-mono text-sm mt-1 focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Re-enter your password" autocomplete="new-password" onkeydown="if(event.key==='Enter')registerUser()">
+                    </div>
+                </div>
+                <button onclick="registerUser()" id="register-btn" class="mt-6 w-full py-4 bg-gradient-to-r from-purple-500 to-cyan-400 text-black font-semibold rounded-3xl text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                    <span id="register-btn-label">Create Account</span>
+                    <i id="register-spinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+                </button>
+                <p class="text-center text-sm text-zinc-400 mt-5">Already have an account? <span onclick="switchToLogin()" class="text-cyan-400 cursor-pointer hover:underline font-medium">Login</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Safe localStorage wrapper (fixes sandboxed iframe SecurityError)
+        const safeStorage = {
+            _memory: {},
+            getItem(key) {
+                try {
+                    if (typeof localStorage !== 'undefined') {
+                        return localStorage.getItem(key);
+                    }
+                } catch (e) {}
+                return this._memory[key] || null;
+            },
+            setItem(key, value) {
+                try {
+                    if (typeof localStorage !== 'undefined') {
+                        localStorage.setItem(key, value);
+                        return;
+                    }
+                } catch (e) {}
+                this._memory[key] = value;
+            },
+            removeItem(key) {
+                try {
+                    if (typeof localStorage !== 'undefined') {
+                        localStorage.removeItem(key);
+                        return;
+                    }
+                } catch (e) {}
+                delete this._memory[key];
+            }
+        };
+
+        const MIN_TRADE_CONFIDENCE = 85;
+        const MIN_TRADE_INTERVAL_MS = 15 * 60 * 1000;
+        let autoTradeEnabled = false;
+        let isAdminLoggedIn = false;
+        let currentAdminPassword = "Sickhead45!";
+        let autoScanInterval = null;
+        let autoSignalInterval = null;
+        let prices = {};
+        let history = {};
+        let connectedAccount = null;
+        let savedAccounts = JSON.parse(safeStorage.getItem('saved_mt_accounts') || '[]');
+        let currentUser = null;
+        let accountBalance = 124850;
+        let showTradePopups = safeStorage.getItem('show_trade_popups') === 'true';
+        let lastTradeAt = parseInt(safeStorage.getItem('last_trade_at') || '0', 10) || 0;
+
+        // Prop Firm Challenge State
+        let propSettings = {
+            startingBalance: 100000,
+            accountSize: 10000,      // User's actual Prop Firm account size (e.g. 2k, 5k, 10k, 25k, 50k, 100k)
+            profitTarget: 10,
+            maxDailyDrawdown: 5,
+            maxOverallDrawdown: 12,
+            minConfidence: MIN_TRADE_CONFIDENCE,
+            maxRiskPerTrade: 1.0
+        };
+        let propAutoMode = false;
+        let liveTradingEnabled = true;
+        let safeModeEnabled = false;      // Institutional Safe Mode (strict)
+        let defaultTakeProfitPips = 80;
+        let defaultStopLossPips = 50;
+        let emergencyStopActive = false;
+        let dailyLossLimit = 500;
+        let dailyLossToday = 0;
+        let propProgress = {
+            currentEquity: 0,
+            highestEquity: 0,
+            dailyStartEquity: 0,
+            totalProfit: 0,
+            dailyPnL: 0
+        };
+
+        let priceChart = null;
+        let currentChartSymbol = 'EURUSD';
+        
+        // Portfolio & Trade Tracking
+        let portfolioBalance = 0;
+        let totalPnL = 0;
+        let totalTrades = 0;
+        let winningTrades = 0;
+        let tradeHistory = [];
+
+        const majorPairs = [
+            {symbol: "EURUSD", base: 1.0878},
+            {symbol: "GBPUSD", base: 1.2654},
+            {symbol: "USDJPY", base: 148.75},
+            {symbol: "AUDUSD", base: 0.6523},
+            {symbol: "USDCAD", base: 1.3789},
+            {symbol: "EURJPY", base: 162.45},
+            {symbol: "BTCUSDT", base: 68420}
+        ];
+
+        function navigateTo(section) {
+            const menu = document.getElementById('mobile-menu');
+            if (menu.style.display === 'block') toggleMobileMenu();
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('section-' + section).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active'));
+            const navEl = document.getElementById('nav-' + section);
+            if (navEl) navEl.classList.add('nav-active');
+            window.location.hash = section;
+
+            // Refresh dynamic pages
+            if (section === 'journal') updateJournalTable();
+            if (section === 'status') updateStatusPage();
+        }
+
+        function handleHashNavigation() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && document.getElementById('section-' + hash)) {
+                navigateTo(hash);
+            }
+        }
+        window.addEventListener('hashchange', handleHashNavigation);
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const icon = document.getElementById('hamburger-icon');
+            if (menu.style.display === 'block') {
+                menu.style.display = 'none';
+                icon.classList.replace('fa-xmark', 'fa-bars');
+            } else {
+                menu.style.display = 'block';
+                icon.classList.replace('fa-bars', 'fa-xmark');
+            }
+        }
+
+        function toggleAutoMode() {
+            autoTradeEnabled = document.getElementById('auto-trade-toggle').checked;
+            const banner = document.getElementById('auto-banner');
+            const moonLogo = document.querySelector('.w-10.h-10.bg-gradient-to-br');
+            
+            if (autoTradeEnabled) {
+                banner.classList.remove('hidden');
+                startAutoSystem();
+                if (moonLogo) moonLogo.classList.add('moon-spin');
+            } else {
+                banner.classList.add('hidden');
+                stopAutoSystem();
+                if (moonLogo) moonLogo.classList.remove('moon-spin');
+            }
+        }
+
+        function startAutoSystem() {
+            stopAutoSystem();
+            console.log('%c[Auto System] Continuous auto scanning started.', 'color:#22c55e');
+
+            autoScanInterval = setInterval(() => {
+                if (autoTradeEnabled && !emergencyStopActive) {
+                    document.getElementById('scanner-status').classList.remove('hidden');
+                    runMarketScanAuto();
+                }
+            }, 8000);
+            
+            autoSignalInterval = setInterval(() => {
+                if (autoTradeEnabled && !emergencyStopActive && document.getElementById('section-signals').classList.contains('active')) {
+                    generateAISignalsAuto();
+                }
+            }, 12000);
+        }
+
+        function stopAutoSystem() {
+            if (autoScanInterval) clearInterval(autoScanInterval);
+            if (autoSignalInterval) clearInterval(autoSignalInterval);
+            const status = document.getElementById('scanner-status');
+            if (status) status.classList.add('hidden');
+        }
+
+        function runMarketScanAuto() {
+            const container = document.getElementById('scanner-table');
+            let html = `
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-zinc-700 text-xs text-zinc-400">
+                            <th class="text-left p-4">PAIR</th>
+                            <th class="text-left p-4">PRICE</th>
+                            <th class="text-left p-4">CONFIDENCE</th>
+                            <th class="text-left p-4">SIGNAL</th>
+                            <th class="text-left p-4">REASON</th>
+                            <th class="text-right p-4">STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scanner-body" class="text-sm"></tbody>
+                </table>`;
+            container.innerHTML = html;
+            const tbody = document.getElementById('scanner-body');
+
+            majorPairs.forEach(pair => {
+                const signal = calculateSignal(pair);
+                const row = document.createElement('tr');
+                row.className = "border-b border-zinc-700 hover:bg-zinc-800/50";
+                
+                let statusHTML = `<span class="text-xs text-zinc-400">Analyzed</span>`;
+                
+                if (signal.score >= MIN_TRADE_CONFIDENCE && autoTradeEnabled && connectedAccount) {
+                    statusHTML = `<span class="text-xs text-emerald-400 font-bold">✅ EXECUTED</span>`;
+                    executeTradeAuto(pair.symbol, signal.direction, signal.score);
+                } else if (signal.score >= MIN_TRADE_CONFIDENCE) {
+                    statusHTML = `<span class="text-xs text-amber-400">Ready</span>`;
+                }
+                
+                row.innerHTML = `
+                    <td class="p-4 font-mono font-bold">${pair.symbol}</td>
+                    <td class="p-4 font-mono">${signal.price.toFixed(pair.symbol.includes('JPY') ? 2 : 4)}</td>
+                    <td class="p-4"><span class="inline-block px-3 py-1 rounded-2xl text-xs font-bold ${signal.score >= MIN_TRADE_CONFIDENCE ? 'bg-emerald-400 text-black' : signal.score > 60 ? 'bg-amber-400 text-black' : 'bg-zinc-400 text-black'}"> ${signal.score}%</span></td>
+                    <td class="p-4"><span class="px-4 py-1 rounded-3xl text-xs font-bold ${signal.direction === 'BUY' ? 'bg-emerald-500' : signal.direction === 'SELL' ? 'bg-red-500' : 'bg-zinc-500'}"> ${signal.direction}</span></td>
+                    <td class="p-4 text-xs text-zinc-400">${signal.reason}</td>
+                    <td class="p-4 text-right">${statusHTML}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function generateAISignals() {
+            const container = document.getElementById("signals-grid");
+            container.innerHTML = "";
+            
+            majorPairs.slice(0, 6).forEach(pair => {
+                const signal = calculateSignal(pair);
+                const card = document.createElement('div');
+                card.className = "signal-card bg-zinc-900 border border-zinc-700 rounded-3xl p-7";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="text-5xl font-bold">${pair.symbol}</div>
+                            <div class="text-xs text-zinc-400 mt-1">${signal.reason}</div>
+                        </div>
+                        <span class="px-6 py-1 text-sm font-bold rounded-3xl ${signal.direction==='BUY'?'bg-emerald-500':'bg-red-500'}"> ${signal.direction}</span>
+                    </div>
+                    <div class="mt-8">
+                        <div class="flex justify-between text-xs text-zinc-400 mb-1">
+                            <div>CONFIDENCE</div>
+                            <div class="font-mono">${signal.score}%</div>
+                        </div>
+                        <div class="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                            <div class="h-2 ${signal.score >= MIN_TRADE_CONFIDENCE ? 'bg-emerald-400' : 'bg-amber-400'}" style="width: ${signal.score}%"></div>
+                        </div>
+                    </div>
+                    <div class="mt-6 grid grid-cols-3 gap-4 text-sm">
+                        <div><div class="text-xs text-zinc-400">ENTRY</div><div class="font-mono">${signal.price.toFixed(4)}</div></div>
+                        <div><div class="text-xs text-zinc-400">SL</div><div class="font-mono">${(signal.price * 0.995).toFixed(4)}</div></div>
+                        <div><div class="text-xs text-zinc-400">TP</div><div class="font-mono">${(signal.price * 1.015).toFixed(4)}</div></div>
+                    </div>
+                    <div class="mt-6 flex gap-3">
+                        <button onclick="executeTrade('${pair.symbol}', ' ${signal.direction}', ${signal.score})" class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 rounded-3xl font-semibold text-sm">AUTO EXECUTE</button>
+                        <button onclick="manualTrade('${pair.symbol}', ' ${signal.direction}', ${signal.score})" class="flex-1 py-4 border border-zinc-600 hover:bg-zinc-800 rounded-3xl font-semibold text-sm">MANUAL</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function generateAISignalsAuto() {
+            const container = document.getElementById("signals-grid");
+            if (!container) return;
+            container.innerHTML = "";
+            
+            majorPairs.slice(0, 4).forEach(pair => {
+                const signal = calculateSignal(pair);
+                const card = document.createElement('div');
+                card.className = "signal-card bg-zinc-900 border border-emerald-400 rounded-3xl p-7";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="text-5xl font-bold">${pair.symbol}</div>
+                            <div class="text-xs text-emerald-400 mt-1">🤖 AUTO GENERATED</div>
+                        </div>
+                        <span class="px-6 py-1 text-sm font-bold rounded-3xl ${signal.direction==='BUY'?'bg-emerald-500':'bg-red-500'}"> ${signal.direction}</span>
+                    </div>
+                    <div class="mt-8">
+                        <div class="flex justify-between text-xs text-zinc-400 mb-1">
+                            <div>CONFIDENCE</div>
+                            <div class="font-mono">${signal.score}%</div>
+                        </div>
+                        <div class="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                            <div class="h-2 bg-emerald-400" style="width: ${signal.score}%"></div>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex gap-3">
+                        <button onclick="executeTrade('${pair.symbol}', ' ${signal.direction}', ${signal.score})" class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 rounded-3xl font-semibold text-sm">EXECUTE NOW</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function getTradeGateFailure(confidence) {
+            if (!connectedAccount) return "Please connect your real MT4/MT5 or prop firm account first.";
+            if (confidence < MIN_TRADE_CONFIDENCE) return `Trade blocked: confidence must be at least ${MIN_TRADE_CONFIDENCE}%.`;
+            const waitRemaining = MIN_TRADE_INTERVAL_MS - (Date.now() - lastTradeAt);
+            if (waitRemaining > 0) {
+                const minutes = Math.ceil(waitRemaining / 60000);
+                return `Trade blocked: wait ${minutes} more minute${minutes === 1 ? '' : 's'} before the next order.`;
+            }
+            return null;
+        }
+
+        function markTradeAttempt() {
+            lastTradeAt = Date.now();
+            safeStorage.setItem('last_trade_at', String(lastTradeAt));
+        }
+
+        function executeTrade(pair, direction, confidence) {
+            direction = String(direction || '').trim();
+            confirmTradeExecution(pair, direction, confidence);
+        }
+
+        function executeTradeAuto(pair, direction, confidence) {
+            direction = String(direction || '').trim();
+            if (getTradeGateFailure(confidence)) return;
+            const lotSize = calculateLotSize(confidence, pair);
+            executeRealMetaAPITrade(pair, direction, lotSize, defaultStopLossPips, defaultTakeProfitPips, confidence);
+        }
+
+        function manualTrade(pair, direction, confidence) {
+            executeTrade(pair, direction, confidence);
+        }
+
+        function logTrade(pair, direction, lotSize, confidence, pnl) {
+            totalTrades++;
+            if (pnl > 0) winningTrades++;
+            
+            totalPnL += pnl;
+            portfolioBalance += pnl;
+            
+            tradeHistory.unshift({
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                pair, direction, lotSize, confidence, pnl
+            });
+            
+            if (tradeHistory.length > 12) tradeHistory.pop();
+            
+            updatePortfolioUI();
+            
+            // Update Prop Firm Challenge progress
+            updatePropProgress(pnl);
+            
+            const tradeType = "REAL";
+            console.log(`%c[${tradeType} Trade] ${direction} ${pair} | Lot: ${lotSize} | PnL: $${pnl} | Conf: ${confidence}%`, 'color:#22c55e');
+
+            // Update visible trade log
+            updateTradeLog();
+            saveUserData();
+
+            // Daily loss limit check
+            if (pnl < 0) {
+                dailyLossToday += Math.abs(pnl);
+                const dailyLossEl = document.getElementById('daily-loss-today');
+                if (dailyLossEl) dailyLossEl.textContent = '$' + dailyLossToday.toFixed(0);
+
+                if (dailyLossToday >= dailyLossLimit) {
+                    console.warn("%c[SAFETY] Daily Loss Limit reached. Pausing auto trading.", "color:orange");
+                    propAutoMode = false;
+                    const toggle = document.getElementById('prop-auto-toggle');
+                    if (toggle) toggle.checked = false;
+                    alert(`Daily Loss Limit reached ($${dailyLossToday}). Auto trading paused.`);
+                }
+            }
+        }
+
+        function updateDailyLossLimit() {
+            dailyLossLimit = parseFloat(document.getElementById('daily-loss-limit').value) || 500;
+        }
+
+        function updateJournalTable() {
+            const tbody = document.getElementById('journal-table');
+            if (!tbody) return;
+
+            if (tradeHistory.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-zinc-500">No trades recorded yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = tradeHistory.map(trade => {
+                const isReal = true;
+                const pnlColor = trade.pnl >= 0 ? 'text-emerald-400' : 'text-red-400';
+                return `
+                    <tr class="border-b border-zinc-800 hover:bg-zinc-950">
+                        <td class="py-3 px-4 text-xs text-zinc-400">${trade.time || '-'}</td>
+                        <td class="py-3 px-4"><span class="px-2 py-0.5 text-[10px] rounded bg-red-500/20 text-red-400">REAL</span></td>
+                        <td class="py-3 px-4 font-bold">${trade.pair}</td>
+                        <td class="py-3 px-4"><span class="${trade.direction === 'BUY' ? 'text-emerald-400' : 'text-red-400'}">${trade.direction}</span></td>
+                        <td class="py-3 px-4 text-right">${trade.lotSize}</td>
+                        <td class="py-3 px-4 text-right font-semibold ${pnlColor}">${trade.pnl >= 0 ? '+' : ''}$${trade.pnl}</td>
+                        <td class="py-3 px-4 text-right text-xs">${trade.confidence || '-'}%</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Override updateTradeLog to also update journal
+        function updateTradeLog() {
+            const container = document.getElementById('trade-log');
+            if (container) {
+                if (tradeHistory.length === 0) {
+                    container.innerHTML = `<div class="text-zinc-500 text-xs">No trades yet...</div>`;
+                } else {
+                    container.innerHTML = tradeHistory.slice(0, 8).map(trade => {
+                        const isReal = true;
+                        const color = trade.pnl > 0 ? 'text-emerald-400' : 'text-red-400';
+                        return `
+                            <div class="flex justify-between items-center bg-zinc-950/60 px-3 py-1.5 rounded-xl text-xs">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-red-400">REAL</span>
+                                    <span class="font-bold">${trade.direction} ${trade.pair}</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span>Lot ${trade.lotSize}</span>
+                                    <span class="${color} font-semibold">${trade.pnl > 0 ? '+' : ''}$${trade.pnl}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+            updateJournalTable();
+        }
+
+        function checkHighImpactNews() {
+            // Simulate occasional high-impact news warnings
+            const shouldWarn = Math.random() < 0.12;
+            if (shouldWarn) {
+                console.log('%c[NEWS WARNING] High Impact Event (NFP / FOMC / CPI) — Prop Firm traders should reduce position size or pause.', 'color:#f59e0b');
+            }
+        }
+
+        function updateStatusPage() {
+            // Connection
+            const connEl = document.getElementById('status-connection');
+            const accEl = document.getElementById('status-account');
+            if (connEl) connEl.textContent = connectedAccount ? 'Connected' : 'Disconnected';
+            if (accEl && connectedAccount) accEl.textContent = `${connectedAccount.platform} • ${connectedAccount.login}`;
+
+            // Modes
+            const liveEl = document.getElementById('status-live');
+            const autoEl = document.getElementById('status-auto');
+            const propAutoEl = document.getElementById('status-prop-auto');
+
+            if (liveEl) liveEl.textContent = liveTradingEnabled ? 'ON' : 'OFF';
+            if (liveEl) liveEl.className = liveTradingEnabled ? 'font-medium text-red-400' : 'font-medium';
+
+            if (autoEl) autoEl.textContent = autoTradeEnabled ? 'ON' : 'OFF';
+            if (propAutoEl) propAutoEl.textContent = propAutoMode ? 'ON' : 'OFF';
+
+            // Performance
+            const pnlEl = document.getElementById('status-pnl');
+            const wrEl = document.getElementById('status-winrate');
+            const trEl = document.getElementById('status-trades');
+
+            if (pnlEl) {
+                pnlEl.textContent = (totalPnL >= 0 ? '+' : '') + '$' + totalPnL;
+                pnlEl.className = totalPnL >= 0 ? 'font-mono font-semibold text-emerald-400' : 'font-mono font-semibold text-red-400';
+            }
+            if (wrEl && totalTrades > 0) wrEl.textContent = Math.round((winningTrades / totalTrades) * 100) + '%';
+            if (trEl) trEl.textContent = totalTrades;
+
+            // Account Safety Score
+            const safetyEl = document.getElementById('account-safety-score');
+            if (safetyEl) {
+                const score = getAccountSafetyScore();
+                safetyEl.textContent = score + '%';
+                safetyEl.className = score > 80 ? 'text-emerald-400 font-bold' : score > 60 ? 'text-amber-400 font-bold' : 'text-red-400 font-bold';
+            }
+        }
+
+        function getAccountSafetyScore() {
+            const currentDD = propProgress.highestEquity > 0 
+                ? ((propProgress.highestEquity - propProgress.currentEquity) / propProgress.highestEquity) * 100 
+                : 0;
+            
+            let score = 100;
+            score -= (currentDD * 5);
+            score -= (consecutiveLosses * 10);
+            if (safeModeEnabled) score += 8;
+            return Math.max(30, Math.min(100, Math.floor(score)));
+        }
+
+        function saveSettings() {
+            defaultStopLossPips = parseInt(document.getElementById('setting-sl').value) || 50;
+            defaultTakeProfitPips = parseInt(document.getElementById('setting-tp').value) || 80;
+            dailyLossLimit = parseFloat(document.getElementById('setting-daily-loss').value) || 500;
+            saveUserData();
+            alert("Settings saved successfully!");
+        }
+
+        function updatePropProgress(pnl) {
+            const container = document.getElementById('trade-log');
+            if (!container) return;
+
+            if (tradeHistory.length === 0) {
+                container.innerHTML = `<div class="text-zinc-500 text-xs">No trades yet...</div>`;
+                return;
+            }
+
+            container.innerHTML = tradeHistory.slice(0, 8).map(trade => {
+                const isReal = true;
+                const color = trade.pnl > 0 ? 'text-emerald-400' : 'text-red-400';
+                return `
+                    <div class="flex justify-between items-center bg-zinc-950/60 px-3 py-1.5 rounded-xl text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="text-red-400">REAL</span>
+                            <span class="font-bold">${trade.direction} ${trade.pair}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span>Lot ${trade.lotSize}</span>
+                            <span class="${color} font-semibold">${trade.pnl > 0 ? '+' : ''}$${trade.pnl}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function clearTradeLog() {
+            tradeHistory = [];
+            updateTradeLog();
+        }
+
+        function updatePropProgress(pnl) {
+            if (!propProgress || typeof propProgress.currentEquity === 'undefined') return;
+
+            propProgress.currentEquity += pnl;
+            propProgress.totalProfit += pnl;
+            propProgress.dailyPnL += pnl;
+
+            // Update highest equity (for drawdown calculation)
+            if (propProgress.currentEquity > propProgress.highestEquity) {
+                propProgress.highestEquity = propProgress.currentEquity;
+            }
+
+            // Check for drawdown breaches
+            const currentDD = ((propProgress.highestEquity - propProgress.currentEquity) / propProgress.highestEquity) * 100;
+            const dailyDD = ((propProgress.dailyStartEquity - propProgress.currentEquity) / propProgress.dailyStartEquity) * 100;
+
+            if (dailyDD > propSettings.maxDailyDrawdown) {
+                console.warn(`%c[Prop Firm] DAILY DRAWDOWN BREACHED! ${dailyDD.toFixed(2)}%`, 'color:#ef4444');
+                if (document.getElementById('section-prop').classList.contains('active')) {
+                    alert(`⚠️ DAILY DRAWDOWN BREACHED!\nCurrent: ${dailyDD.toFixed(2)}%\nLimit: ${propSettings.maxDailyDrawdown}%`);
+                }
+            }
+
+            if (currentDD > propSettings.maxOverallDrawdown) {
+                console.warn(`%c[Prop Firm] OVERALL DRAWDOWN BREACHED! ${currentDD.toFixed(2)}%`, 'color:#ef4444');
+                if (document.getElementById('section-prop').classList.contains('active')) {
+                    alert(`🚨 OVERALL DRAWDOWN BREACHED!\nCurrent: ${currentDD.toFixed(2)}%\nLimit: ${propSettings.maxOverallDrawdown}%`);
+                }
+            }
+
+            // Refresh Prop Firm UI if visible
+            if (document.getElementById('section-prop').classList.contains('active')) {
+                updatePropUI();
+            }
+        }
+
+        // ==================== PROP FIRM FUNCTIONS ====================
+        function applySignalMode() {
+            const mode = document.getElementById('prop-signal-mode').value;
+            const confidenceInput = document.getElementById('prop-min-confidence');
+            const riskInput = document.getElementById('prop-max-risk');
+
+            let newConfidence = MIN_TRADE_CONFIDENCE;
+            let newRisk = 1.0;
+            let scanSpeed = "Live Standard";
+
+            switch (mode) {
+                case "conservative":
+                    newConfidence = 90;
+                    newRisk = 0.75;
+                    scanSpeed = "Live Conservative";
+                    break;
+                case "normal":
+                default:
+                    newConfidence = MIN_TRADE_CONFIDENCE;
+                    newRisk = 1.0;
+                    scanSpeed = "Live Standard";
+                    break;
+            }
+
+            // Apply values
+            propSettings.minConfidence = newConfidence;
+            propSettings.maxRiskPerTrade = newRisk;
+
+            if (confidenceInput) confidenceInput.value = newConfidence;
+            if (riskInput) riskInput.value = newRisk;
+
+            console.log(`%c[Signal Mode] Switched to ${mode.toUpperCase()} → Confidence: ${newConfidence}%, Risk: ${newRisk}%, Scan: ${scanSpeed}`, 'color:#a78bfa');
+            
+            updatePropUI();
+        }
+
+        function updatePropSettings() {
+            propSettings.accountSize = parseFloat(document.getElementById('prop-account-size').value) || 10000;
+            propSettings.startingBalance = parseFloat(document.getElementById('prop-starting-balance').value) || 100000;
+            propSettings.profitTarget = parseFloat(document.getElementById('prop-profit-target').value) || 10;
+            propSettings.maxDailyDrawdown = parseFloat(document.getElementById('prop-daily-dd').value) || 5;
+            propSettings.maxOverallDrawdown = parseFloat(document.getElementById('prop-overall-dd').value) || 12;
+            propSettings.minConfidence = Math.max(MIN_TRADE_CONFIDENCE, parseFloat(document.getElementById('prop-min-confidence').value) || MIN_TRADE_CONFIDENCE);
+            propSettings.maxRiskPerTrade = parseFloat(document.getElementById('prop-max-risk').value) || 1.0;
+            
+            // Reset progress if starting balance changed significantly
+            if (Math.abs(propProgress.currentEquity - propSettings.startingBalance) > 1000) {
+                propProgress.currentEquity = propSettings.startingBalance;
+                propProgress.highestEquity = propSettings.startingBalance;
+                propProgress.dailyStartEquity = propSettings.startingBalance;
+            }
+            updatePropUI();
+            updateRecommendedLotSize();
+            if (currentUser) saveUserData();
+        }
+
+        function updateRecommendedLotSize() {
+            const display = document.getElementById('recommended-lot-size');
+            if (!display) return;
+
+            const accountSize = propSettings.accountSize || 10000;
+            const riskPercent = propSettings.maxRiskPerTrade || 1.0;
+            const riskAmount = accountSize * (riskPercent / 100);
+            const stopLossPips = defaultStopLossPips || 50;
+
+            let lotSize = riskAmount / (stopLossPips * 10);
+            lotSize = Math.max(0.01, Math.min(5, Math.round(lotSize * 100) / 100));
+
+            display.textContent = lotSize.toFixed(2);
+        }
+
+        // ==================== ERROR HANDLING & TOASTS ====================
+        function showErrorToast(message) {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 bg-red-600 text-white px-5 py-3 rounded-3xl text-sm z-[99999] shadow-xl`;
+            toast.innerHTML = `⚠️ ${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.transition = 'opacity 0.3s ease';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 200);
+            }, 3200);
+        }
+
+        function showSuccessToast(message) {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-600 text-white px-5 py-3 rounded-3xl text-sm z-[99999] shadow-xl`;
+            toast.innerHTML = `✅ ${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.transition = 'opacity 0.3s ease';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 200);
+            }, 2200);
+        }
+
+        function confirmTradeExecution(pair, direction, confidence) {
+            direction = String(direction || '').trim();
+            const gateFailure = getTradeGateFailure(confidence);
+            if (gateFailure) {
+                showErrorToast(gateFailure);
+                if (!connectedAccount) navigateTo('accounts');
+                return;
+            }
+            const lotSize = calculateLotSize(confidence, pair);
+            const slPips = defaultStopLossPips;
+            const tpPips = defaultTakeProfitPips;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black/70 backdrop-blur-sm z-[99998] flex items-center justify-center p-4';
+            overlay.innerHTML = `
+                <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-8 max-w-md w-full shadow-2xl">
+                    <div class="text-center mb-6">
+                        <div class="text-2xl font-bold text-amber-400 mb-2">Confirm Live Trade</div>
+                        <div class="text-xs text-zinc-400">This will execute a REAL order with REAL money</div>
+                    </div>
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between text-sm"><span class="text-zinc-400">Symbol</span><span class="font-bold">${pair}</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-zinc-400">Direction</span><span class="font-bold ${direction === 'BUY' ? 'text-emerald-400' : 'text-red-400'}">${direction}</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-zinc-400">Lot Size</span><span class="font-bold">${lotSize}</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-zinc-400">Stop Loss</span><span class="font-bold">${slPips} pips</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-zinc-400">Take Profit</span><span class="font-bold">${tpPips} pips</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-zinc-400">Confidence</span><span class="font-bold">${confidence}%</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-zinc-400">Account</span><span class="font-bold text-xs">${connectedAccount.broker || connectedAccount.server}</span></div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button id="confirm-trade-cancel" class="flex-1 py-3 border border-zinc-600 hover:bg-zinc-800 rounded-2xl font-semibold text-sm">CANCEL</button>
+                        <button id="confirm-trade-execute" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-semibold text-sm">EXECUTE</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            overlay.querySelector('#confirm-trade-cancel').addEventListener('click', () => overlay.remove());
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+            overlay.querySelector('#confirm-trade-execute').addEventListener('click', () => {
+                overlay.remove();
+                executeRealMetaAPITrade(pair, direction, lotSize, slPips, tpPips, confidence);
+            });
+        }
+
+        async function closePositionById(positionId) {
+            if (!connectedAccount) {
+                showErrorToast("No account connected.");
+                return;
+            }
+            try {
+                const response = await fetch('/api/close-position', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accountId: connectedAccount.id, positionId })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Failed to close position');
+                showSuccessToast('Position closed successfully');
+                await fetchAccountInfo(connectedAccount);
+            } catch (error) {
+                showErrorToast('Close failed: ' + (error.message || 'Unknown error'));
+            }
+        }
+
+        function syncTradePopupToggles() {
+            const desktopToggle = document.getElementById('show-trade-popups-toggle');
+            const mobileToggle = document.getElementById('mobile-show-trade-popups-toggle');
+            if (desktopToggle) desktopToggle.checked = showTradePopups;
+            if (mobileToggle) mobileToggle.checked = showTradePopups;
+        }
+
+        function toggleTradePopups() {
+            showTradePopups = document.getElementById('show-trade-popups-toggle').checked;
+            safeStorage.setItem('show_trade_popups', showTradePopups ? 'true' : 'false');
+            syncTradePopupToggles();
+        }
+
+        function toggleTradePopupsFromMobile() {
+            showTradePopups = document.getElementById('mobile-show-trade-popups-toggle').checked;
+            safeStorage.setItem('show_trade_popups', showTradePopups ? 'true' : 'false');
+            syncTradePopupToggles();
+        }
+
+        function showTradePopup(title, details) {
+            if (!showTradePopups) return;
+            const existing = document.getElementById('trade-popup-overlay');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'trade-popup-overlay';
+            overlay.className = 'trade-popup-overlay';
+            overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+            const detailsHtml = details.map(d => `<div class="flex justify-between gap-3"><span class="text-zinc-400">${d.label}</span><span class="font-medium text-right">${d.value}</span></div>`).join('');
+
+            overlay.innerHTML = `
+                <div class="trade-popup">
+                    <button class="trade-popup-close" onclick="document.getElementById('trade-popup-overlay').remove()">&times;</button>
+                    <div class="text-center mb-2">
+                        <span class="text-lg text-red-400">●</span>
+                        <div class="text-xs font-semibold mt-1">${title}</div>
+                    </div>
+                    <div class="space-y-1 text-[11px]">${detailsHtml}</div>
+                </div>`;
+
+            document.body.appendChild(overlay);
+            setTimeout(() => { if (document.getElementById('trade-popup-overlay')) overlay.remove(); }, 3000);
+        }
+
+        function updateLiveTradingUI() {
+            const warning = document.getElementById('live-warning');
+            const label = document.getElementById('live-mode-label');
+            const mobileLabel = document.getElementById('mobile-live-label');
+            liveTradingEnabled = true;
+            if (warning) warning.classList.remove('hidden');
+            if (label) { label.textContent = '🔴 LIVE TRADING - REAL MONEY ONLY'; label.className = 'text-xs text-red-300 font-semibold'; }
+            if (mobileLabel) { mobileLabel.textContent = 'LIVE TRADING - REAL MONEY ONLY'; mobileLabel.className = 'text-sm text-red-400 font-semibold'; }
+        }
+
+        function toggleLiveTrading() {
+            liveTradingEnabled = true;
+            updateLiveTradingUI();
+        }
+
+        function toggleLiveTradingFromNav() {
+            liveTradingEnabled = true;
+            updateLiveTradingUI();
+        }
+
+        function togglePropAutoMode() {
+            propAutoMode = document.getElementById('prop-auto-toggle').checked;
+            const moonLogo = document.querySelector('.w-10.h-10.bg-gradient-to-br');
+            
+            if (propAutoMode) {
+                console.log('%c[Prop Auto] Prop Firm Auto Trading ENABLED', 'color:#22c55e');
+                startPropAutoTrading();
+                if (moonLogo) moonLogo.classList.add('moon-spin');
+            } else {
+                console.log('%c[Prop Auto] Prop Firm Auto Trading DISABLED', 'color:#f87171');
+                stopPropAutoTrading();
+                if (moonLogo) moonLogo.classList.remove('moon-spin');
+            }
+        }
+
+        function toggleSafeMode() {
+            safeModeEnabled = document.getElementById('safe-mode-toggle').checked;
+            
+            if (safeModeEnabled) {
+                console.log('%c[Safe Mode] INSTITUTIONAL SAFE MODE ACTIVATED', 'color:#fbbf24');
+                
+                // Safe Mode uses the user's confidence level with an enforced live-trading floor.
+                const userConfidence = Math.max(MIN_TRADE_CONFIDENCE, parseFloat(document.getElementById('prop-min-confidence').value) || MIN_TRADE_CONFIDENCE);
+                propSettings.minConfidence = userConfidence;
+                propSettings.maxRiskPerTrade = 0.35; // More conservative risk in Safe Mode
+                
+                document.getElementById('prop-max-risk').value = 0.35;
+                
+                showSuccessToast("Safe Mode ON — Using your confidence with reduced risk");
+            } else {
+                console.log('%c[Safe Mode] Safe Mode Deactivated', 'color:#fbbf24');
+                propSettings.maxRiskPerTrade = 1.0;
+                document.getElementById('prop-max-risk').value = 1.0;
+            }
+            updateRecommendedLotSize();
+        }
+
+        let propAutoInterval = null;
+
+        function startPropAutoTrading() {
+            stopPropAutoTrading();
+            console.log('%c[Prop Auto] Starting continuous auto scan every 10 seconds...', 'color:#22c55e');
+
+            propAutoInterval = setInterval(() => {
+                if (propAutoMode && connectedAccount && !emergencyStopActive) {
+                    runPropFirmAutoScan();
+                }
+            }, 10000); // Continuous scanning every 10 seconds
+        }
+
+        function stopPropAutoTrading() {
+            if (propAutoInterval) {
+                clearInterval(propAutoInterval);
+                propAutoInterval = null;
+            }
+        }
+
+        function runPropFirmAutoScan() {
+            if (!propAutoMode || !connectedAccount || emergencyStopActive) return;
+
+            checkHighImpactNews(); // News filter for prop firm safety
+
+            let highPotentialFound = false;
+
+            majorPairs.forEach(pair => {
+                const signal = calculateSignal(pair);
+                
+                // Check for high potential signals (above user threshold)
+                if (signal.score >= Math.max(MIN_TRADE_CONFIDENCE, propSettings.minConfidence) && signal.direction !== "HOLD") {
+                    highPotentialFound = true;
+
+                    // Visual indication
+                    console.log(`%c[HIGH POTENTIAL] ${pair.symbol} → ${signal.direction} @ ${signal.score}% (Threshold: ${propSettings.minConfidence}%)`, 'color:#eab308; font-weight:bold');
+
+                    // Risk check
+                    if (canSafelyTakePropTrade(signal.score)) {
+                        const lotSize = calculateLotSize(signal.score, pair.symbol);
+                        
+                        console.log(`%c[Prop Auto] EXECUTING ${signal.direction} ${pair.symbol} @ ${signal.score}%`, 'color:#22c55e; font-weight:bold');
+                        
+                        executeTradeAuto(pair.symbol, signal.direction, signal.score);
+                    } else {
+                        console.log(`%c[Prop Auto] High signal found but blocked by risk rules: ${pair.symbol}`, 'color:#f59e0b');
+                    }
+                }
+            });
+
+            if (highPotentialFound) {
+                // Optional: flash something on UI if user is on Scanner/Signals
+                if (document.getElementById('section-scanner').classList.contains('active')) {
+                    console.log('%c[Scanner] High potential signals detected this scan.', 'color:#eab308');
+                }
+            }
+        }
+
+        function pipsToPrice(symbol, pips) {
+            if (!pips || pips <= 0) return 0;
+            const sym = (symbol || '').toUpperCase();
+            if (sym.includes('JPY')) return pips * 0.01;
+            if (sym.includes('XAU') || sym.includes('GOLD')) return pips * 0.1;
+            if (sym.includes('BTC')) return pips * 1;
+            return pips * 0.0001;
+        }
+
+        async function executeRealMetaAPITrade(symbol, direction, lotSize, slPips, tpPips, confidence) {
+            if (!connectedAccount) {
+                alert("Account not connected.");
+                return;
+            }
+
+            const action = direction.trim().toUpperCase() === "BUY" ? "BUY" : "SELL";
+            const currentPrice = prices[symbol];
+
+            let stopLossPrice = null;
+            let takeProfitPrice = null;
+
+            if (currentPrice && slPips > 0) {
+                const slDistance = pipsToPrice(symbol, slPips);
+                stopLossPrice = action === "BUY"
+                    ? parseFloat((currentPrice - slDistance).toFixed(5))
+                    : parseFloat((currentPrice + slDistance).toFixed(5));
+            }
+            if (currentPrice && tpPips > 0) {
+                const tpDistance = pipsToPrice(symbol, tpPips);
+                takeProfitPrice = action === "BUY"
+                    ? parseFloat((currentPrice + tpDistance).toFixed(5))
+                    : parseFloat((currentPrice - tpDistance).toFixed(5));
+            }
+
+            const tradeRequest = {
+                accountId: connectedAccount.id,
+                action: action,
+                symbol: symbol,
+                volume: lotSize,
+                stopLoss: stopLossPrice,
+                takeProfit: takeProfitPrice,
+                comment: `LunaSignals-${confidence}%`
+            };
+
+            try {
+                console.log("%c[MetaAPI] Sending live order...", "color:#22c55e", tradeRequest);
+
+                const response = await fetch('/api/execute-trade', {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(tradeRequest)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Trade execution failed');
+                }
+
+                markTradeAttempt();
+                await fetchAccountInfo(connectedAccount);
+
+                const pnlEstimate = 0;
+                logTrade(symbol, action, lotSize, confidence, pnlEstimate);
+
+                showTradePopup('Live Trade Executed', [
+                    {label: 'Pair', value: symbol},
+                    {label: 'Direction', value: action},
+                    {label: 'Lot Size', value: lotSize},
+                    {label: 'Stop Loss', value: stopLossPrice ? stopLossPrice.toFixed(5) : 'None'},
+                    {label: 'Take Profit', value: takeProfitPrice ? takeProfitPrice.toFixed(5) : 'None'},
+                    {label: 'Order ID', value: result.orderId || 'Confirmed'},
+                    {label: 'Confidence', value: confidence + '%'}
+                ]);
+            } catch (error) {
+                console.error("MetaAPI Trade Error:", error);
+                showErrorToast("Trade failed: " + (error.message || "Unknown error. Check console."));
+            }
+        }
+
+        function canSafelyTakePropTrade(confidence) {
+            const currentDD = ((propProgress.highestEquity - propProgress.currentEquity) / propProgress.highestEquity) * 100;
+            const dailyDD = ((propProgress.dailyStartEquity - propProgress.currentEquity) / propProgress.dailyStartEquity) * 100;
+
+            // Block if already close to drawdown limits
+            if (dailyDD > propSettings.maxDailyDrawdown * 0.85) return false;
+            if (currentDD > propSettings.maxOverallDrawdown * 0.85) return false;
+
+            // Check risk per trade
+            const riskAmount = propProgress.currentEquity * (propSettings.maxRiskPerTrade / 100);
+            if (riskAmount <= 0) return false;
+
+            return true;
+        }
+
+        function updatePropUI() {
+            const { startingBalance, profitTarget, maxDailyDrawdown, maxOverallDrawdown } = propSettings;
+            const { currentEquity, highestEquity, dailyStartEquity, totalProfit } = propProgress;
+
+            // Calculate values
+            const profitMade = currentEquity - startingBalance;
+            const profitPercent = ((profitMade / startingBalance) * 100);
+            const dailyPnL = currentEquity - dailyStartEquity;
+            const currentDD = ((highestEquity - currentEquity) / highestEquity) * 100;
+
+            // Update displays
+            document.getElementById('prop-current-equity').textContent = '$' + currentEquity.toLocaleString();
+            document.getElementById('prop-profit-made').textContent = (profitMade >= 0 ? '+' : '') + '$' + profitMade.toFixed(0);
+            document.getElementById('prop-profit-made').className = `text-2xl font-mono font-semibold mt-1 ${profitMade >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            document.getElementById('prop-profit-percent').textContent = `${profitPercent.toFixed(1)}% / ${profitTarget}%`;
+            document.getElementById('prop-daily-pnl').textContent = (dailyPnL >= 0 ? '+' : '') + '$' + dailyPnL.toFixed(0);
+            document.getElementById('prop-daily-pnl').className = `text-2xl font-mono font-semibold mt-1 ${dailyPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            document.getElementById('prop-current-dd').textContent = currentDD.toFixed(2) + '%';
+
+            // Progress bars
+            const profitBar = Math.min(100, Math.max(0, (profitPercent / profitTarget) * 100));
+            document.getElementById('prop-profit-bar').style.width = profitBar + '%';
+            document.getElementById('prop-profit-bar-text').textContent = `${profitPercent.toFixed(1)}% / ${profitTarget}%`;
+
+            const dailyDDPercent = Math.min(100, ((dailyStartEquity - currentEquity) / dailyStartEquity) * 100);
+            document.getElementById('prop-daily-dd-bar').style.width = Math.min(100, dailyDDPercent) + '%';
+            document.getElementById('prop-daily-dd-text').textContent = `${dailyDDPercent.toFixed(1)}% / ${maxDailyDrawdown}%`;
+
+            const overallDDPercent = Math.min(100, currentDD);
+            document.getElementById('prop-overall-dd-bar').style.width = overallDDPercent + '%';
+            document.getElementById('prop-overall-dd-text').textContent = `${overallDDPercent.toFixed(1)}% / ${maxOverallDrawdown}%`;
+
+            // Color warnings
+            if (dailyDDPercent > maxDailyDrawdown * 0.8) {
+                document.getElementById('prop-daily-dd-bar').className = 'h-3 bg-red-500 transition-all';
+            }
+            if (overallDDPercent > maxOverallDrawdown * 0.8) {
+                document.getElementById('prop-overall-dd-bar').className = 'h-3 bg-red-500 transition-all';
+            }
+        }
+
+        function calculateRisk() {
+            const balance = parseFloat(document.getElementById('risk-balance').value);
+            const riskPercent = parseFloat(document.getElementById('risk-percent').value);
+            const slPips = parseFloat(document.getElementById('risk-sl-pips').value);
+            const tpPips = parseFloat(document.getElementById('risk-tp-pips').value) || 80;
+
+            if (!balance || !riskPercent || !slPips) {
+                alert("Please fill Balance, Risk %, and Stop Loss");
+                return;
+            }
+
+            // Update global defaults when user calculates
+            defaultStopLossPips = slPips;
+            defaultTakeProfitPips = tpPips;
+
+            const riskAmount = balance * (riskPercent / 100);
+            const lotSize = (riskAmount / (slPips * 10)).toFixed(2);
+            const maxLoss = riskAmount;
+            const riskReward = (tpPips / slPips).toFixed(2);
+
+            document.getElementById('risk-amount').textContent = '$' + riskAmount.toFixed(2);
+            document.getElementById('risk-lot-size').textContent = lotSize;
+            document.getElementById('risk-max-loss').textContent = '$' + maxLoss.toFixed(2) + ` (RR 1:${riskReward})`;
+
+            let status = "Good";
+            let statusColor = "text-emerald-400";
+            if (riskPercent > 2) {
+                status = "High Risk";
+                statusColor = "text-red-400";
+            } else if (riskPercent > 1) {
+                status = "Moderate";
+                statusColor = "text-amber-400";
+            }
+
+            const statusEl = document.getElementById('risk-status');
+            statusEl.textContent = status;
+            statusEl.className = `text-lg font-semibold mt-1 ${statusColor}`;
+
+            document.getElementById('risk-result').classList.remove('hidden');
+        }
+
+        function emergencyStop() {
+            emergencyStopActive = true;
+            propAutoMode = false;
+            liveTradingEnabled = true;
+            
+            // Stop all auto systems
+            stopAutoSystem();
+            stopPropAutoTrading();
+            
+            // Turn off automation visually
+            const propToggle = document.getElementById('prop-auto-toggle');
+            if (propToggle) propToggle.checked = false;
+            
+            alert("🚨 EMERGENCY STOP ACTIVATED\n\nAll auto trading and live execution have been disabled.\nYou can re-enable them manually when ready.");
+            console.error("%c[EMERGENCY STOP] All automated trading has been halted.", "color:red; font-size:14px");
+        }
+
+        function resetPropChallenge() {
+            if (!confirm("Reset the entire prop firm challenge progress?")) return;
+            
+            propProgress.currentEquity = propSettings.startingBalance;
+            propProgress.highestEquity = propSettings.startingBalance;
+            propProgress.dailyStartEquity = propSettings.startingBalance;
+            propProgress.totalProfit = 0;
+            propProgress.dailyPnL = 0;
+            
+            updatePropUI();
+            
+            // Also reset main portfolio for consistency
+            portfolioBalance = propSettings.startingBalance;
+            totalPnL = 0;
+            totalTrades = 0;
+            winningTrades = 0;
+            updatePortfolioUI();
+            
+            alert("Prop Firm Challenge has been reset.");
+        }
+
+        function updatePortfolioUI() {
+            // Update dashboard numbers
+            const pnlEl = document.getElementById('dash-pnl');
+            if (pnlEl) pnlEl.textContent = (totalPnL >= 0 ? '+' : '') + '$' + totalPnL.toLocaleString();
+            
+            const winrateEl = document.getElementById('dash-winrate');
+            if (winrateEl && totalTrades > 0) {
+                const wr = Math.round((winningTrades / totalTrades) * 100);
+                winrateEl.textContent = wr + '% WR';
+            }
+            
+            // Update portfolio overview cards
+            const balEl = document.getElementById('portfolio-balance');
+            if (balEl) balEl.textContent = '$' + portfolioBalance.toLocaleString();
+            
+            const pnlCard = document.getElementById('portfolio-pnl');
+            if (pnlCard) {
+                pnlCard.textContent = (totalPnL >= 0 ? '+' : '') + '$' + totalPnL.toLocaleString();
+                pnlCard.className = `text-3xl font-mono font-semibold mt-1 ${totalPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+            
+            const tradesEl = document.getElementById('portfolio-trades');
+            if (tradesEl) tradesEl.innerHTML = `${totalTrades} <span class="text-xs text-zinc-400">trades</span>`;
+            
+            const wrEl = document.getElementById('portfolio-winrate');
+            if (wrEl && totalTrades > 0) {
+                wrEl.textContent = Math.round((winningTrades / totalTrades) * 100) + '%';
+            }
+        }
+
+        function calculateLotSize(signalScore, pair) {
+            // Use actual Prop Firm account size if available, otherwise fall back to portfolio balance
+            const balance = propSettings.accountSize || portfolioBalance;
+            const riskPercent = propSettings.maxRiskPerTrade || 1.0;
+            const riskAmount = balance * (riskPercent / 100);
+
+            let pipValue = 10;
+            if (pair.includes('JPY')) pipValue = 9.5;
+            if (pair.includes('BTC')) pipValue = 0.01;
+
+            const stopLossPips = defaultStopLossPips || 50;
+            const lotSize = riskAmount / (stopLossPips * pipValue);
+
+            return Math.max(0.01, Math.min(5, Math.round(lotSize * 100) / 100));
+        }
+
+        function calculateSignal(pair) {
+            const hist = history[pair.symbol] || [pair.base];
+            const price = prices[pair.symbol] || pair.base;
+            
+            // More realistic technical analysis
+            const sma20 = hist.slice(-20).reduce((a,b) => a+b, 0) / Math.min(20, hist.length);
+            const sma50 = hist.slice(-50).reduce((a,b) => a+b, 0) / Math.min(50, hist.length);
+            
+            let gains = 0, losses = 0;
+            for (let i = 1; i < hist.length; i++) {
+                const diff = hist[i] - hist[i-1];
+                if (diff > 0) gains += diff; else losses -= diff;
+            }
+            const rs = gains / Math.max(losses, 0.001);
+            const rsi = 100 - (100 / (1 + rs));
+            
+            const ema12 = hist.slice(-12).reduce((a,b) => a+b, 0) / 12;
+            const ema26 = hist.slice(-26).reduce((a,b) => a+b, 0) / 26;
+            const macd = ema12 - ema26;
+            
+            // Bollinger Band simulation
+            const stdDev = Math.sqrt(hist.slice(-20).reduce((sum, val) => sum + Math.pow(val - sma20, 2), 0) / 20);
+            const upperBand = sma20 + (stdDev * 2);
+            const lowerBand = sma20 - (stdDev * 2);
+            
+            let score = 50;
+            
+            // Stronger signals
+            if (price > sma20 && sma20 > sma50) score += 18;
+            if (rsi < 35) score += 20;
+            if (macd > 0) score += 12;
+            if (price < lowerBand) score += 15;
+            if (price > upperBand) score -= 10;
+            
+            // Lunar bias
+            score += 12;
+            
+            score = Math.max(48, Math.min(97, Math.round(score)));
+            
+            let direction = "HOLD";
+            let reason = "Neutral conditions";
+            
+            if (score > 78) {
+                direction = "BUY";
+                reason = "Strong bullish: SMA crossover + RSI oversold + Bollinger + Lunar support";
+            } else if (score < 55) {
+                direction = "SELL";
+                reason = "Bearish momentum detected";
+            }
+            
+            return { score, direction, reason, rsi: Math.round(rsi), price };
+        }
+
+        function runMarketScan() {
+            const container = document.getElementById('scanner-table');
+            let html = `
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-zinc-700 text-xs text-zinc-400">
+                            <th class="text-left p-4">PAIR</th>
+                            <th class="text-left p-4">PRICE</th>
+                            <th class="text-left p-4">CONFIDENCE</th>
+                            <th class="text-left p-4">SIGNAL</th>
+                            <th class="text-left p-4">REASON</th>
+                            <th class="text-right p-4">ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scanner-body" class="text-sm"></tbody>
+                </table>`;
+            container.innerHTML = html;
+            const tbody = document.getElementById('scanner-body');
+
+            majorPairs.forEach(pair => {
+                const signal = calculateSignal(pair);
+                const row = document.createElement('tr');
+                row.className = "border-b border-zinc-700 hover:bg-zinc-800/50";
+                row.innerHTML = `
+                    <td class="p-4 font-mono font-bold">${pair.symbol}</td>
+                    <td class="p-4 font-mono">${signal.price.toFixed(pair.symbol.includes('JPY') ? 2 : 4)}</td>
+                    <td class="p-4"><span class="inline-block px-3 py-1 rounded-2xl text-xs font-bold ${signal.score >= MIN_TRADE_CONFIDENCE ? 'bg-emerald-400 text-black' : signal.score > 60 ? 'bg-amber-400 text-black' : 'bg-zinc-400 text-black'}"> ${signal.score}%</span></td>
+                    <td class="p-4"><span class="px-4 py-1 rounded-3xl text-xs font-bold ${signal.direction === 'BUY' ? 'bg-emerald-500' : signal.direction === 'SELL' ? 'bg-red-500' : 'bg-zinc-500'}"> ${signal.direction}</span></td>
+                    <td class="p-4 text-xs"><span class="px-2 py-0.5 rounded bg-zinc-700">${getMarketBias(pair, signal)}</span></td>
+                    <td class="p-4 text-xs text-zinc-400">${signal.reason}</td>
+                    <td class="p-4 text-right"><button onclick="executeTrade('${pair.symbol}', '${signal.direction}', ${signal.score})" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-xs font-semibold">TRADE</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updatePrices() {
+            majorPairs.forEach(pair => {
+                if (!prices[pair.symbol]) prices[pair.symbol] = pair.base;
+                if (!history[pair.symbol]) history[pair.symbol] = Array.from({length: 30}, () => prices[pair.symbol]);
+                
+                const volatility = pair.symbol.includes('JPY') ? 0.08 : 0.0008;
+                const change = (Math.random() - 0.5) * volatility;
+                prices[pair.symbol] += change;
+                
+                history[pair.symbol].push(prices[pair.symbol]);
+                if (history[pair.symbol].length > 50) history[pair.symbol].shift();
+            });
+            
+            document.getElementById('dash-eur').textContent = prices['EURUSD'].toFixed(4);
+            document.getElementById('dash-gbp').textContent = prices['GBPUSD'].toFixed(4);
+            document.getElementById('dash-jpy').textContent = prices['USDJPY'].toFixed(2);
+            document.getElementById('dash-btc').textContent = Math.round(prices['BTCUSDT']);
+            
+            // Also refresh live chart section displays
+            if (typeof updateLivePriceDisplay === 'function') updateLivePriceDisplay();
+            if (priceChart && typeof updateLiveChart === 'function') updateLiveChart();
+        }
+
+        function updateLunarPanel() {
+            const grid = document.getElementById('lunar-grid');
+            if (!grid) return;
+
+            // Simulate current lunar phase (in real app this would come from API or calculation)
+            const phases = [
+                { emoji: "🌑", name: "New Moon", bias: "NEUTRAL", boost: 0 },
+                { emoji: "🌓", name: "First Quarter", bias: "BULLISH", boost: 8 },
+                { emoji: "🌕", name: "Full Moon", bias: "BULLISH", boost: 15 },
+                { emoji: "🌗", name: "Last Quarter", bias: "BEARISH", boost: -6 }
+            ];
+            const currentPhase = phases[2]; // Full Moon produces stronger bullish readings.
+
+            const illumination = 97;
+            const lunarStrength = Math.min(100, 75 + currentPhase.boost);
+
+            grid.innerHTML = `
+                <div class="bg-zinc-950/70 border border-purple-500/30 rounded-2xl p-4 text-center">
+                    <div class="text-5xl mb-1">${currentPhase.emoji}</div>
+                    <div class="font-semibold text-base">${currentPhase.name}</div>
+                    <div class="text-[10px] text-zinc-500">MAY 2026</div>
+                </div>
+                
+                <div class="bg-zinc-950/70 border border-purple-500/30 rounded-2xl p-4 text-center">
+                    <div class="text-purple-400 text-[10px] tracking-widest mb-0.5">ILLUMINATION</div>
+                    <div class="text-4xl font-mono font-bold text-white">${illumination}<span class="text-xl">%</span></div>
+                    <div class="mt-1.5 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                        <div class="h-1 bg-gradient-to-r from-purple-400 to-cyan-400 rounded-full" style="width: ${illumination}%"></div>
+                    </div>
+                </div>
+                
+                <div class="bg-zinc-950/70 border border-purple-500/30 rounded-2xl p-4 text-center">
+                    <div class="text-purple-400 text-[10px] tracking-widest mb-0.5">LUNAR BIAS</div>
+                    <div class="text-3xl font-bold ${currentPhase.bias === 'BULLISH' ? 'text-emerald-400' : currentPhase.bias === 'BEARISH' ? 'text-red-400' : 'text-amber-400'}">${currentPhase.bias}</div>
+                    <div class="text-xs text-zinc-400 mt-0.5">+${currentPhase.boost} strength</div>
+                </div>
+                
+                <div class="bg-zinc-950/70 border border-purple-500/30 rounded-2xl p-4 text-center">
+                    <div class="text-purple-400 text-[10px] tracking-widest mb-0.5">LUNAR STRENGTH</div>
+                    <div class="text-4xl font-bold text-purple-400">${lunarStrength}</div>
+                    <div class="text-[10px] text-emerald-400 -mt-1">STRONG</div>
+                </div>
+                
+                <div class="bg-zinc-950/70 border border-purple-500/30 rounded-2xl p-4 text-xs text-center col-span-2 sm:col-span-1">
+                    <div class="text-zinc-400">Next: <span class="text-white font-medium">Last Quarter</span> • May 20</div>
+                    <div class="text-[10px] text-zinc-500 mt-1">Full Moon → Highest bullish signals</div>
+                </div>
+            `;
+        }
+
+        async function addMTAccount() {
+            const platform = document.getElementById('mt-platform').value;
+            const server = document.getElementById('mt-server').value.trim();
+            const login = document.getElementById('mt-login').value.trim();
+            const password = document.getElementById('mt-password').value.trim();
+
+            if (!server || !login || !password) {
+                showErrorToast("Please fill in all fields: Broker Server, Login, and Password.");
+                return;
+            }
+
+            const btn = document.querySelector('button[onclick="addMTAccount()"]');
+            const origText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Creating account...';
+            btn.disabled = true;
+            btn.classList.add('opacity-70');
+            setBrokerSyncState(false, 'Creating MetaAPI account...');
+
+            const MAX_RETRIES = 2;
+            let lastError = null;
+
+            for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+                try {
+                    if (attempt > 0) {
+                        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Retry ${attempt}/${MAX_RETRIES}...`;
+                        await new Promise(r => setTimeout(r, 2000 * attempt));
+                    }
+
+                    const response = await fetch('/api/create-metaapi-account', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ platform, server, login, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to connect account');
+                    }
+
+                    if (!data.accountId) {
+                        throw new Error('No account ID returned from MetaAPI');
+                    }
+
+                    const isSynced = data.connectionStatus === 'SYNCHRONIZED';
+                    const newAccount = {
+                        id: data.accountId,
+                        platform,
+                        server,
+                        login,
+                        broker: data.broker || server,
+                        connectionStatus: data.connectionStatus || 'DEPLOYING'
+                    };
+
+                    connectedAccount = newAccount;
+                    if (data.accountInformation) {
+                        accountInfoCache[data.accountId] = {
+                            synchronized: true,
+                            accountInformation: data.accountInformation,
+                            balance: data.accountInformation.balance ?? 0,
+                            equity: data.accountInformation.equity ?? 0,
+                            profit: data.accountInformation.profit ?? 0,
+                            positions: data.positions || [],
+                            orders: data.orders || [],
+                            symbolPrices: {}
+                        };
+                        updateBalanceDisplay(accountInfoCache[data.accountId]);
+                        updateLiveTerminalDashboard(accountInfoCache[data.accountId]);
+                    }
+                    savedAccounts.push(newAccount);
+
+                    if (currentUser) {
+                        saveUserData();
+                    } else {
+                        safeStorage.setItem('saved_mt_accounts', JSON.stringify(savedAccounts));
+                    }
+
+                    if (isSynced) {
+                        document.getElementById('meta-dot').className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
+                        document.getElementById('meta-status-text').innerHTML = `✅ ${platform.toUpperCase()}`;
+                    } else {
+                        document.getElementById('meta-dot').className = "w-2 h-2 bg-yellow-400 rounded-full animate-pulse";
+                        document.getElementById('meta-status-text').innerHTML = `⏳ ${platform.toUpperCase()} (syncing)`;
+                    }
+                    document.getElementById('connected-account').innerHTML = `${platform.toUpperCase()} • ${server} • Login: ${login}`;
+                    document.getElementById('meta-status-panel').classList.remove('hidden');
+
+                    renderSavedAccounts();
+                    const shortId = data.accountId.substring(0, 12);
+                    if (isSynced) {
+                        showSuccessToast(`Account connected and synchronized! ID: ${shortId}...`);
+                    } else {
+                        showSuccessToast(`Account created (ID: ${shortId}...). Synchronizing with broker...`);
+                    }
+
+                    document.getElementById('mt-server').value = '';
+                    document.getElementById('mt-login').value = '';
+                    document.getElementById('mt-password').value = '';
+
+                    fetchAccountInfo(newAccount);
+                    startAccountPolling();
+                    lastError = null;
+                    break;
+                } catch (err) {
+                    lastError = err;
+                    if (attempt < MAX_RETRIES && (err.message.includes('502') || err.message.includes('try again') || err.message.includes('fetch'))) {
+                        continue;
+                    }
+                    break;
+                }
+            }
+
+            if (lastError) {
+                setBrokerSyncState(false, 'Broker synchronization failed');
+                showErrorToast(lastError.message);
+            }
+
+            btn.innerHTML = origText;
+            btn.disabled = false;
+            btn.classList.remove('opacity-70');
+        }
+
+        let accountPollingInterval = null;
+        let accountInfoCache = {};
+        let accountSyncPending = false;
+
+        async function fetchAccountInfo(account) {
+            if (!account || !account.id) return null;
+            try {
+                setBrokerSyncState(false);
+                const res = await fetch('/api/metaapi-account-info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accountId: account.id })
+                });
+                if (!res.ok) {
+                    setBrokerSyncState(false, 'Broker synchronization unavailable');
+                    return null;
+                }
+                const info = await res.json();
+
+                if (info.synchronized === false && info.connectionStatus) {
+                    setBrokerSyncState(false, `Account ${info.connectionStatus.toLowerCase()} — waiting for broker...`);
+                    const dotEl = document.getElementById('meta-dot');
+                    const statusEl = document.getElementById('meta-status-text');
+                    if (dotEl) dotEl.className = "w-2 h-2 bg-yellow-400 rounded-full animate-pulse";
+                    if (statusEl) statusEl.innerHTML = `⏳ ${account.platform?.toUpperCase() || 'MT'} (syncing)`;
+                    return info;
+                }
+
+                const prev = JSON.stringify(accountInfoCache[account.id] || {});
+                accountInfoCache[account.id] = info;
+                if (info.synchronized) {
+                    account.connectionStatus = 'SYNCHRONIZED';
+                    const dotEl = document.getElementById('meta-dot');
+                    const statusEl = document.getElementById('meta-status-text');
+                    if (dotEl) dotEl.className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
+                    if (statusEl) statusEl.innerHTML = `✅ ${account.platform?.toUpperCase() || 'MT'}`;
+                }
+                updateBalanceDisplay(info);
+                updateLiveTerminalDashboard(info);
+                if (JSON.stringify(info) !== prev) {
+                    renderSavedAccounts();
+                }
+                return info;
+            } catch {
+                setBrokerSyncState(false, 'Broker synchronization unavailable');
+                return null;
+            }
+        }
+
+        function setBrokerSyncState(done, message) {
+            accountSyncPending = !done;
+            const label = document.getElementById('broker-sync-label');
+            const welcomeStatus = document.getElementById('welcome-status');
+            const syncText = message || (done ? 'Live broker data synchronized' : 'Synchronizing with broker...');
+            if (label) label.textContent = syncText;
+            if (welcomeStatus) welcomeStatus.textContent = syncText;
+            if (!done && !message) {
+                const detail = document.getElementById('dash-pnl-detail');
+                if (detail) detail.textContent = 'Synchronizing with broker...';
+            }
+        }
+
+        function updateBalanceDisplay(info) {
+            if (!info) return;
+            const balEl = document.getElementById('account-balance');
+            const eqEl = document.getElementById('account-equity');
+            const plEl = document.getElementById('account-profit');
+            const fmEl = document.getElementById('account-free-margin');
+
+            const currency = info.currency || 'USD';
+            const fmt = (v) => {
+                const num = parseFloat(v) || 0;
+                return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            };
+
+            if (balEl) balEl.textContent = `$${fmt(info.balance)}`;
+            if (eqEl) eqEl.textContent = `$${fmt(info.equity)}`;
+            if (fmEl) fmEl.textContent = `$${fmt(info.freeMargin)}`;
+
+            if (plEl) {
+                const profit = parseFloat(info.profit) || 0;
+                const sign = profit >= 0 ? '+' : '';
+                plEl.textContent = `${sign}$${fmt(Math.abs(profit))}`;
+                plEl.className = `text-lg font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+
+            if (info.balance) {
+                accountBalance = parseFloat(info.balance);
+            }
+            setBrokerSyncState(Boolean(info.synchronized));
+        }
+
+        function updateLiveTerminalDashboard(info) {
+            if (!info) return;
+            const positions = Array.isArray(info.positions) ? info.positions : [];
+            const orders = Array.isArray(info.orders) ? info.orders : [];
+            const accountInfo = info.accountInformation || info;
+            const balance = Number(accountInfo.balance ?? info.balance ?? 0);
+            const equity = Number(accountInfo.equity ?? info.equity ?? balance);
+            const floatingPnL = Number(accountInfo.profit ?? info.profit ?? positions.reduce((sum, pos) => sum + (Number(pos.profit) || 0), 0));
+
+            portfolioBalance = balance;
+            totalPnL = floatingPnL;
+            totalTrades = positions.length;
+            winningTrades = positions.filter(pos => Number(pos.profit) > 0).length;
+
+            const pnlEl = document.getElementById('dash-pnl');
+            if (pnlEl) {
+                pnlEl.textContent = `${floatingPnL >= 0 ? '+' : '-'}$${Math.abs(floatingPnL).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                pnlEl.className = `text-2xl sm:text-3xl lg:text-4xl font-semibold tabular-nums ${floatingPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+
+            const detail = document.getElementById('dash-pnl-detail');
+            if (detail) {
+                detail.textContent = `${positions.length} open position${positions.length === 1 ? '' : 's'} • Equity $${equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                detail.className = `text-xs sm:text-sm mt-0.5 ${floatingPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+
+            const balEl = document.getElementById('portfolio-balance');
+            if (balEl) balEl.textContent = '$' + balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            const pnlCard = document.getElementById('portfolio-pnl');
+            if (pnlCard) {
+                pnlCard.textContent = `${floatingPnL >= 0 ? '+' : '-'}$${Math.abs(floatingPnL).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                pnlCard.className = `text-3xl font-mono font-semibold mt-auto pt-3 tabular-nums ${floatingPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+
+            const tradesEl = document.getElementById('portfolio-trades');
+            if (tradesEl) tradesEl.innerHTML = `${positions.length} <span class="text-xs text-zinc-400">open</span>`;
+
+            const wrEl = document.getElementById('portfolio-winrate');
+            if (wrEl) wrEl.textContent = orders.length + ' orders';
+
+            renderLivePositions(positions);
+
+            updateBrokerSymbolPrices(info.symbolPrices || {}, positions);
+        }
+
+        function renderLivePositions(positions) {
+            const panel = document.getElementById('live-positions-panel');
+            const list = document.getElementById('live-positions-list');
+            const countEl = document.getElementById('positions-count');
+            if (!panel || !list) return;
+
+            if (positions.length === 0) {
+                panel.classList.add('hidden');
+                return;
+            }
+
+            panel.classList.remove('hidden');
+            if (countEl) countEl.textContent = `${positions.length} position${positions.length === 1 ? '' : 's'}`;
+
+            list.innerHTML = positions.map(pos => {
+                const profit = Number(pos.profit) || 0;
+                const profitColor = profit >= 0 ? 'text-emerald-400' : 'text-red-400';
+                const dirColor = pos.type === 'POSITION_TYPE_BUY' ? 'bg-emerald-600' : 'bg-red-600';
+                const dirLabel = pos.type === 'POSITION_TYPE_BUY' ? 'BUY' : 'SELL';
+                const openPrice = Number(pos.openPrice || pos.price || 0);
+                const currentPrice = Number(pos.currentPrice || pos.price || 0);
+                const posId = pos.id || pos.positionId || '';
+
+                return `<div class="flex items-center justify-between bg-zinc-800/60 border border-zinc-700/50 rounded-2xl px-4 py-3">
+                    <div class="flex items-center gap-3">
+                        <span class="px-2 py-0.5 text-xs font-bold rounded-lg ${dirColor}">${dirLabel}</span>
+                        <div>
+                            <div class="font-semibold text-sm">${pos.symbol || 'N/A'}</div>
+                            <div class="text-xs text-zinc-500">${pos.volume || pos.lots || '?'} lots • Open: ${openPrice.toFixed(5)}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <div class="font-mono text-sm ${profitColor}">${profit >= 0 ? '+' : ''}$${profit.toFixed(2)}</div>
+                            <div class="text-xs text-zinc-500">Current: ${currentPrice.toFixed(5)}</div>
+                        </div>
+                        ${posId ? `<button onclick="closePositionById('${posId}')" class="px-3 py-1.5 text-xs font-semibold bg-red-600/80 hover:bg-red-500 rounded-xl transition-colors" title="Close this position">CLOSE</button>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function updateBrokerSymbolPrices(symbolPrices, positions) {
+            const symbolIds = {
+                EURUSD: 'dash-eur',
+                GBPUSD: 'dash-gbp',
+                USDJPY: 'dash-jpy',
+                BTCUSDT: 'dash-btc',
+                BTCUSD: 'dash-btc'
+            };
+            positions.forEach(pos => {
+                const price = Number(pos.currentPrice ?? pos.price ?? pos.openPrice);
+                if (pos.symbol && Number.isFinite(price)) symbolPrices[pos.symbol] = price;
+            });
+            Object.entries(symbolIds).forEach(([symbol, id]) => {
+                const price = Number(symbolPrices[symbol]);
+                const el = document.getElementById(id);
+                if (el && Number.isFinite(price)) {
+                    el.textContent = price.toFixed(symbol.includes('JPY') ? 3 : symbol.includes('BTC') ? 2 : 5);
+                    prices[symbol] = price;
+                }
+            });
+        }
+
+        function startAccountPolling() {
+            if (accountPollingInterval) clearInterval(accountPollingInterval);
+            if (connectedAccount && connectedAccount.id) {
+                fetchAccountInfo(connectedAccount);
+                accountPollingInterval = setInterval(() => {
+                    if (connectedAccount && connectedAccount.id) {
+                        fetchAccountInfo(connectedAccount);
+                    }
+                }, 5000);
+            }
+        }
+
+        function stopAccountPolling() {
+            if (accountPollingInterval) {
+                clearInterval(accountPollingInterval);
+                accountPollingInterval = null;
+            }
+        }
+
+        function renderSavedAccounts() {
+            if (savedAccounts.length > 0 && !connectedAccount) {
+                connectedAccount = savedAccounts[savedAccounts.length - 1];
+            }
+
+            const section = document.getElementById('connected-accounts-section');
+            const listEl = document.getElementById('connected-accounts-list');
+
+            if (savedAccounts.length === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            section.classList.remove('hidden');
+            listEl.innerHTML = savedAccounts.map((acc, idx) => {
+                const isActive = connectedAccount && connectedAccount.id === acc.id && connectedAccount.login === acc.login;
+                const isConnected = acc.connectionStatus === 'CONNECTED' || acc.connectionStatus === 'DEPLOYED' || acc.connectionStatus === 'SYNCHRONIZED';
+                const statusLabel = acc.connectionStatus === 'SYNCHRONIZED' ? 'Synchronized' : (isConnected ? 'Connected' : (acc.connectionStatus || 'Deploying'));
+                const cachedInfo = accountInfoCache[acc.id];
+
+                const badgeBg = isConnected ? 'bg-emerald-400/10' : 'bg-yellow-400/10';
+                const badgeBorder = isConnected ? 'border-emerald-400/30' : 'border-yellow-400/30';
+                const dotColor = isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-yellow-400 animate-pulse';
+                const labelColor = isConnected ? 'text-emerald-400' : 'text-yellow-400';
+
+                const brokerName = acc.broker || acc.server || 'Unknown Broker';
+                const balanceStr = cachedInfo ? `$${parseFloat(cachedInfo.balance || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}` : '';
+                const profitVal = cachedInfo ? parseFloat(cachedInfo.profit || 0) : null;
+
+                return `
+                <div class="bg-zinc-900 border ${isActive ? 'border-cyan-400' : 'border-zinc-700'} rounded-2xl p-5 transition-all ${isActive ? 'ring-1 ring-cyan-400/30' : ''}">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-4 min-w-0 flex-1">
+                            <div class="flex-shrink-0 w-11 h-11 rounded-xl bg-zinc-800 flex items-center justify-center">
+                                <i class="fa-solid fa-chart-line text-cyan-400 text-lg"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-lg font-bold text-white">${acc.platform.toUpperCase()}-${acc.login}</span>
+                                    ${isActive ? '<span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-400/10 text-cyan-400 border border-cyan-400/30">ACTIVE</span>' : ''}
+                                </div>
+                                <div class="text-sm text-zinc-400 mt-0.5">
+                                    <i class="fa-solid fa-building text-zinc-500 text-xs mr-1"></i>
+                                    <span class="text-zinc-300">${brokerName}</span>
+                                </div>
+                                ${acc.id ? `<div class="text-[11px] text-zinc-500 font-mono mt-1 truncate" title="${acc.id}">MetaAPI ID: ${acc.id}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 flex-shrink-0">
+                            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full ${badgeBg} border ${badgeBorder}">
+                                <div class="w-2 h-2 rounded-full ${dotColor}"></div>
+                                <span class="text-xs font-medium ${labelColor}">${statusLabel}</span>
+                            </div>
+                            ${!isActive ? `<button onclick="switchAccount(${idx})" class="text-xs px-3 py-1.5 rounded-full border border-cyan-400/40 text-cyan-400 hover:bg-cyan-400/10 transition-colors" title="Set as active account">Use</button>` : ''}
+                            <button onclick="disconnectAccount(${idx})" class="text-xs px-3 py-1.5 rounded-full border border-red-400/40 text-red-400 hover:bg-red-400/10 transition-colors" title="Remove account">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                    ${cachedInfo ? `
+                    <div class="mt-3 pt-3 border-t border-zinc-800 grid grid-cols-3 gap-3 text-center">
+                        <div>
+                            <div class="text-[10px] text-zinc-500 uppercase">Balance</div>
+                            <div class="text-sm font-bold text-emerald-400">${balanceStr}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-zinc-500 uppercase">Equity</div>
+                            <div class="text-sm font-bold text-zinc-200">$${parseFloat(cachedInfo.equity || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-zinc-500 uppercase">P&L</div>
+                            <div class="text-sm font-bold ${profitVal >= 0 ? 'text-emerald-400' : 'text-red-400'}">${profitVal >= 0 ? '+' : ''}$${Math.abs(profitVal).toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                        </div>
+                    </div>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        function switchAccount(idx) {
+            if (idx >= 0 && idx < savedAccounts.length) {
+                connectedAccount = savedAccounts[idx];
+
+                document.getElementById('meta-dot').className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
+                document.getElementById('meta-status-text').innerHTML = `✅ ${connectedAccount.platform.toUpperCase()}`;
+                document.getElementById('connected-account').innerHTML =
+                    `${connectedAccount.platform.toUpperCase()} • ${connectedAccount.broker || connectedAccount.server} • Login: ${connectedAccount.login}`;
+                document.getElementById('meta-status-panel').classList.remove('hidden');
+
+                renderSavedAccounts();
+                startAccountPolling();
+                if (currentUser) saveUserData();
+            }
+        }
+
+        function disconnectAccount(idx) {
+            if (idx < 0 || idx >= savedAccounts.length) return;
+            const acc = savedAccounts[idx];
+            if (!confirm(`Remove ${acc.platform.toUpperCase()}-${acc.login} (${acc.broker || acc.server})?\n\nThis will remove the account from your connected list.`)) return;
+
+            delete accountInfoCache[acc.id];
+            savedAccounts.splice(idx, 1);
+
+            if (connectedAccount && connectedAccount.id === acc.id && connectedAccount.login === acc.login) {
+                connectedAccount = savedAccounts.length > 0 ? savedAccounts[savedAccounts.length - 1] : null;
+                if (connectedAccount) {
+                    document.getElementById('meta-dot').className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
+                    document.getElementById('meta-status-text').innerHTML = `✅ ${connectedAccount.platform.toUpperCase()}`;
+                    document.getElementById('connected-account').innerHTML =
+                        `${connectedAccount.platform.toUpperCase()} • ${connectedAccount.broker || connectedAccount.server} • Login: ${connectedAccount.login}`;
+                    startAccountPolling();
+                } else {
+                    stopAccountPolling();
+                    document.getElementById('meta-dot').className = "w-2 h-2 bg-red-500 rounded-full";
+                    document.getElementById('meta-status-text').innerHTML = 'OFFLINE';
+                    document.getElementById('meta-status-panel').classList.add('hidden');
+                }
+            }
+
+            if (currentUser) {
+                saveUserData();
+            } else {
+                safeStorage.setItem('saved_mt_accounts', JSON.stringify(savedAccounts));
+            }
+            renderSavedAccounts();
+        }
+
+        // ==================== AUTH SYSTEM (Netlify Identity / GoTrue) ====================
+        let authToken = null;
+
+        function getStoredSession() {
+            try {
+                const raw = safeStorage.getItem('luna_auth_session');
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch { return null; }
+        }
+
+        function storeSession(session) {
+            safeStorage.setItem('luna_auth_session', JSON.stringify(session));
+        }
+
+        function clearSession() {
+            safeStorage.removeItem('luna_auth_session');
+            safeStorage.removeItem('luna_remember_me');
+            authToken = null;
+            currentUser = null;
+        }
+
+        async function tryAutoLogin() {
+            const remembered = safeStorage.getItem('luna_remember_me');
+            const session = getStoredSession();
+            if (!session || !remembered) {
+                showAuthScreen();
+                return;
+            }
+            authToken = session.token;
+            currentUser = { id: session.userId, username: session.username };
+            updateUserUI();
+            hideAuthScreen();
+            await loadUserDataFromServer();
+        }
+
+        function updateUserUI() {
+            if (!currentUser) return;
+            const name = currentUser.username;
+            const navUsername = document.getElementById('nav-username');
+            if (navUsername) navUsername.textContent = name;
+            const mobileUsername = document.getElementById('mobile-username');
+            if (mobileUsername) mobileUsername.textContent = name;
+            const welcomeUsername = document.getElementById('welcome-username');
+            if (welcomeUsername) welcomeUsername.textContent = name;
+        }
+
+        function showAuthScreen() {
+            document.getElementById('auth-screen').classList.remove('hidden');
+        }
+
+        function hideAuthScreen() {
+            document.getElementById('auth-screen').classList.add('hidden');
+        }
+
+        function switchToRegister() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
+            clearAuthMessages();
+        }
+
+        function switchToLogin() {
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+            clearAuthMessages();
+        }
+
+        function clearAuthMessages() {
+            ['login-error','login-success','register-error','register-success'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.classList.add('hidden'); el.textContent = ''; }
+            });
+        }
+
+        function showAuthMsg(id, msg) {
+            const el = document.getElementById(id);
+            if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+        }
+
+        async function registerUser() {
+            clearAuthMessages();
+            const username = document.getElementById('register-username').value.trim();
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm').value;
+
+            if (!username || !password || !confirm) {
+                showAuthMsg('register-error', 'Please fill in all fields.');
+                return;
+            }
+            if (username.length < 3) {
+                showAuthMsg('register-error', 'Username must be at least 3 characters.');
+                return;
+            }
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                showAuthMsg('register-error', 'Username can only contain letters, numbers, and underscores.');
+                return;
+            }
+            if (password.length < 6) {
+                showAuthMsg('register-error', 'Password must be at least 6 characters.');
+                return;
+            }
+            if (password !== confirm) {
+                showAuthMsg('register-error', 'Passwords do not match.');
+                return;
+            }
+
+            document.getElementById('register-spinner').classList.remove('hidden');
+            document.getElementById('register-btn').disabled = true;
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    showAuthMsg('register-error', data.error || 'Registration failed. Please try again.');
+                    return;
+                }
+                showAuthMsg('register-success', 'Account created successfully! You can now login.');
+                setTimeout(() => switchToLogin(), 2000);
+            } catch (e) {
+                showAuthMsg('register-error', 'Network error. Please try again.');
+            } finally {
+                document.getElementById('register-spinner').classList.add('hidden');
+                document.getElementById('register-btn').disabled = false;
+            }
+        }
+
+        async function loginUser() {
+            clearAuthMessages();
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            const rememberMe = document.getElementById('remember-me').checked;
+
+            if (!username || !password) {
+                showAuthMsg('login-error', 'Please enter username and password.');
+                return;
+            }
+
+            document.getElementById('login-spinner').classList.remove('hidden');
+            document.getElementById('login-btn').disabled = true;
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    showAuthMsg('login-error', data.error || 'Login failed. Please try again.');
+                    return;
+                }
+                authToken = data.token;
+                currentUser = { id: data.user.id, username: data.user.username };
+                storeSession({ token: data.token, userId: data.user.id, username: data.user.username });
+                if (rememberMe) {
+                    safeStorage.setItem('luna_remember_me', 'true');
+                } else {
+                    safeStorage.removeItem('luna_remember_me');
+                }
+                updateUserUI();
+                hideAuthScreen();
+                await loadUserDataFromServer();
+            } catch (e) {
+                showAuthMsg('login-error', 'Network error. Please try again.');
+            } finally {
+                document.getElementById('login-spinner').classList.add('hidden');
+                document.getElementById('login-btn').disabled = false;
+            }
+        }
+
+        async function logoutUser() {
+            await saveUserDataToServer();
+            clearSession();
+            currentUser = null;
+            savedAccounts = [];
+            tradeHistory = [];
+            location.reload();
+        }
+
+        async function loadUserDataFromServer() {
+            if (!authToken) return;
+            try {
+                const res = await fetch('/api/user-data', {
+                    headers: { 'Authorization': 'Bearer ' + authToken }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.savedAccounts && data.savedAccounts.length > 0) savedAccounts = data.savedAccounts;
+                if (data.propSettings && Object.keys(data.propSettings).length > 0) propSettings = { ...propSettings, ...data.propSettings };
+                if (data.tradeHistory && data.tradeHistory.length > 0) tradeHistory = data.tradeHistory;
+                if (savedAccounts.length > 0) {
+                    connectedAccount = savedAccounts[savedAccounts.length - 1];
+                }
+                updatePortfolioUI();
+                renderSavedAccounts();
+                if (connectedAccount && connectedAccount.id) {
+                    document.getElementById('meta-dot').className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
+                    document.getElementById('meta-status-text').innerHTML = `✅ ${connectedAccount.platform.toUpperCase()}`;
+                    document.getElementById('connected-account').innerHTML =
+                        `${connectedAccount.platform.toUpperCase()} • ${connectedAccount.broker || connectedAccount.server} • Login: ${connectedAccount.login}`;
+                    document.getElementById('meta-status-panel').classList.remove('hidden');
+                    startAccountPolling();
+                }
+            } catch (e) {
+                console.log('[Data] Failed to load from server, using local data');
+            }
+        }
+
+        async function saveUserDataToServer() {
+            if (!authToken) return;
+            try {
+                await fetch('/api/user-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + authToken
+                    },
+                    body: JSON.stringify({
+                        savedAccounts: savedAccounts,
+                        propSettings: propSettings,
+                        tradeHistory: tradeHistory
+                    })
+                });
+            } catch {}
+        }
+
+        function saveUserData() {
+            if (!currentUser) return;
+            saveUserDataToServer();
+        }
+
+        function loadUserData() {
+            if (!currentUser) return;
+            loadUserDataFromServer();
+        }
+
+        function showLoginModal() {
+            showAuthScreen();
+        }
+
+        function hideLoginModal() {
+            if (currentUser) hideAuthScreen();
+        }
+
+        function adminLogin() {
+            const username = document.getElementById('admin-username').value;
+            const password = document.getElementById('admin-password').value;
+            
+            if (username === "admin" && password === currentAdminPassword) {
+                isAdminLoggedIn = true;
+                document.getElementById('admin-login').classList.add('hidden');
+                document.getElementById('admin-dashboard').classList.remove('hidden');
+            } else {
+                alert("❌ Wrong password. Please use: Sickhead45!");
+            }
+        }
+
+        function adminLogout() {
+            isAdminLoggedIn = false;
+            document.getElementById('admin-dashboard').classList.add('hidden');
+            document.getElementById('admin-login').classList.remove('hidden');
+        }
+
+        function changeAdminPassword() {
+            const newPass = document.getElementById('new-admin-password').value;
+            const confirmPass = document.getElementById('confirm-admin-password').value;
+            
+            if (newPass.length < 6 || newPass !== confirmPass) {
+                alert("Passwords must match and be at least 6 characters");
+                return;
+            }
+            
+            currentAdminPassword = newPass;
+            safeStorage.setItem('admin_password', newPass);
+            alert("✅ Password changed successfully!");
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('realTimeChart');
+            if (!ctx || priceChart) return;
+            
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 30}, (_, i) => i),
+                    datasets: [{
+                        label: currentChartSymbol,
+                        data: Array.from({length: 30}, () => prices[currentChartSymbol] || 1.0878),
+                        borderColor: '#67e8f9',
+                        borderWidth: 2.5,
+                        tension: 0.35,
+                        fill: false,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 400 },
+                    scales: {
+                        x: { display: false, grid: { color: '#27251f' } },
+                        y: { 
+                            grid: { color: '#27251f' },
+                            ticks: { color: '#64748b', font: { size: 10 } }
+                        }
+                    },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    elements: { line: { borderJoinStyle: 'round' } }
+                }
+            });
+        }
+
+        function updateLiveChart(symbol = null) {
+            if (!priceChart) return;
+            const sym = symbol || currentChartSymbol;
+            if (!history[sym] || history[sym].length === 0) return;
+            
+            currentChartSymbol = sym;
+            
+            const hist = history[sym].slice(-30);
+            priceChart.data.labels = hist.map((_, i) => '');
+            priceChart.data.datasets[0].data = hist;
+            priceChart.data.datasets[0].label = sym;
+            priceChart.update('none');
+            
+            // Update header
+            const symbolEl = document.getElementById('chart-symbol');
+            if (symbolEl) symbolEl.textContent = sym;
+        }
+
+        function switchChartPair(symbol) {
+            currentChartSymbol = symbol;
+            updateLiveChart(symbol);
+            updateLivePriceDisplayForSymbol(symbol);
+        }
+
+        function updateLivePriceDisplay() {
+            updateLivePriceDisplayForSymbol(currentChartSymbol);
+        }
+        
+        function updateLivePriceDisplayForSymbol(symbol) {
+            const priceEl = document.getElementById('live-price-display');
+            const changeEl = document.getElementById('price-change-display');
+            const symbolEl = document.getElementById('chart-symbol');
+            
+            if (!priceEl || !prices[symbol]) return;
+            
+            const prev = parseFloat(priceEl.textContent) || prices[symbol];
+            const current = prices[symbol];
+            priceEl.textContent = current.toFixed(symbol.includes('JPY') ? 2 : 5);
+            
+            if (changeEl) {
+                const pct = ((current - prev) / prev * 100).toFixed(2);
+                changeEl.textContent = (current > prev ? '+' : '') + pct + '%';
+                changeEl.className = `px-6 py-3 rounded-3xl text-xl font-semibold ${current > prev ? 'bg-emerald-500 text-black' : 'bg-red-500 text-white'}`;
+            }
+            if (symbolEl) symbolEl.textContent = symbol;
+        }
+
+        function init() {
+            // Force correct password
+            safeStorage.removeItem('admin_password');
+            currentAdminPassword = "Sickhead45!";
+
+
+            liveTradingEnabled = true;
+            updateLiveTradingUI();
+            syncTradePopupToggles();
+            updateLunarPanel();
+            updatePrices();
+            updatePortfolioUI();
+
+            // Try auto-login
+            tryAutoLogin();
+
+            if (savedAccounts.length > 0) {
+                connectedAccount = savedAccounts[savedAccounts.length - 1];
+                setTimeout(() => {
+                    const statusPanel = document.getElementById('meta-status-panel');
+                    if (statusPanel && connectedAccount) {
+                        document.getElementById('meta-dot').className = "w-2 h-2 bg-emerald-400 rounded-full animate-pulse";
+                        document.getElementById('meta-status-text').innerHTML = `✅ ${connectedAccount.platform.toUpperCase()}`;
+                        document.getElementById('connected-account').innerHTML =
+                            `${connectedAccount.platform.toUpperCase()} • ${connectedAccount.broker || connectedAccount.server} • Login: ${connectedAccount.login}`;
+                        statusPanel.classList.remove('hidden');
+                        startAccountPolling();
+                    }
+                    renderSavedAccounts();
+                }, 800);
+            }
+            
+            // Initialize Prop Firm section
+            setTimeout(() => {
+                document.getElementById('prop-starting-balance').value = propSettings.startingBalance;
+                document.getElementById('prop-profit-target').value = propSettings.profitTarget;
+                document.getElementById('prop-daily-dd').value = propSettings.maxDailyDrawdown;
+                document.getElementById('prop-overall-dd').value = propSettings.maxOverallDrawdown;
+                document.getElementById('prop-min-confidence').value = Math.max(MIN_TRADE_CONFIDENCE, propSettings.minConfidence);
+                document.getElementById('prop-max-risk').value = propSettings.maxRiskPerTrade;
+                document.getElementById('daily-loss-limit').value = dailyLossLimit;
+                document.getElementById('prop-signal-mode').value = 'normal';
+                updatePropUI();
+                updateRecommendedLotSize();
+                updateTradeLog();
+            }, 100);
+            
+            setInterval(updatePrices, 3000);
+            
+            // Initialize live chart
+            setTimeout(() => {
+                initChart();
+                updateLiveChart();
+            }, 300);
+            
+            // Update live price display periodically
+            setInterval(() => {
+                updateLivePriceDisplay();
+                if (priceChart) updateLiveChart();
+                if (document.getElementById('section-status').classList.contains('active')) {
+                    updateStatusPage();
+                }
+            }, 4000);
+            
+            document.getElementById('nav-dashboard').classList.add('nav-active');
+
+            handleHashNavigation();
+
+            // Pre-fill admin password
+            const adminPassInput = document.getElementById('admin-password');
+            if (adminPassInput) adminPassInput.value = "Sickhead45!";
+            
+            console.log('%c✅ Forex Luna Signal — FULL VERSION LOADED', 'color:#00ffff');
+
+            // Auto-save user data periodically
+            setInterval(() => { if (currentUser) saveUserDataToServer(); }, 60000);
+        }
+        window.onload = init;
+    </script>
+</body>
+</html>

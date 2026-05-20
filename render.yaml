@@ -1,11 +1,13 @@
 services:
   - type: web
     name: forex-luna-backend
-    env: node
+    runtime: node
+    plan: free
     buildCommand: npm install
     startCommand: npm start
     envVars:
+      - key: METAAPI_TOKEN
+        scope: build,runtime
+        description: Your MetaAPI token from agiliumtrade.ai
       - key: NODE_ENV
         value: production
-      - key: WEBHOOK_SECRET
-        sync: false

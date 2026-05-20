@@ -1,5 +1,30 @@
 [build]
-  publish = "."
+  publish = "public"
+  command = "echo 'Frontend is ready'"
 
-[functions]
-  directory = "netlify/functions"
+# Handle client-side routing (SPA behavior)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Production environment
+[context.production]
+  environment = { RENDER_BACKEND_URL = "https://forex-luna-backend.onrender.com" }
+
+# Deploy preview environment
+[context.deploy-preview]
+  environment = { RENDER_BACKEND_URL = "https://forex-luna-backend.onrender.com" }
+
+# Branch deploy environment
+[context.branch-deploy]
+  environment = { RENDER_BACKEND_URL = "https://forex-luna-backend.onrender.com" }
+
+# Headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"

@@ -987,22 +987,23 @@
 
             majorPairs.forEach(pair => {
                 const signal = calculateSignal(pair);
+                const decimals = pair.symbol.includes('JPY') ? 2 : pair.symbol === 'BTCUSDT' ? 0 : 4;
                 const row = document.createElement('tr');
                 row.className = "border-b border-zinc-700 hover:bg-zinc-800/50";
-                
+
                 let statusHTML = `<span class="text-xs text-zinc-400">Analyzed</span>`;
-                
-                if (signal.score >= MIN_TRADE_CONFIDENCE && autoTradeEnabled && connectedAccount) {
-                    statusHTML = `<span class="text-xs text-emerald-400 font-bold">✅ EXECUTED</span>`;
-                    executeTradeAuto(pair.symbol, signal.direction, signal.score);
-                } else if (signal.score >= MIN_TRADE_CONFIDENCE) {
+
+                if (signal.confidence >= MIN_TRADE_CONFIDENCE && signal.direction !== "HOLD" && autoTradeEnabled && connectedAccount) {
+                    statusHTML = `<span class="text-xs ${signal.direction === 'SELL' ? 'text-red-400' : 'text-emerald-400'} font-bold">✅ EXECUTED</span>`;
+                    executeTradeAuto(pair.symbol, signal.direction, signal.confidence);
+                } else if (signal.confidence >= MIN_TRADE_CONFIDENCE && signal.direction !== "HOLD") {
                     statusHTML = `<span class="text-xs text-amber-400">Ready</span>`;
                 }
-                
+
                 row.innerHTML = `
                     <td class="p-4 font-mono font-bold">${pair.symbol}</td>
-                    <td class="p-4 font-mono">${signal.price.toFixed(pair.symbol.includes('JPY') ? 2 : 4)}</td>
-                    <td class="p-4"><span class="inline-block px-3 py-1 rounded-2xl text-xs font-bold ${signal.score >= MIN_TRADE_CONFIDENCE ? 'bg-emerald-400 text-black' : signal.score > 60 ? 'bg-amber-400 text-black' : 'bg-zinc-400 text-black'}"> ${signal.score}%</span></td>
+                    <td class="p-4 font-mono">${signal.price.toFixed(decimals)}</td>
+                    <td class="p-4"><span class="inline-block px-3 py-1 rounded-2xl text-xs font-bold ${signal.confidence >= MIN_TRADE_CONFIDENCE ? (signal.direction === 'SELL' ? 'bg-red-400 text-black' : 'bg-emerald-400 text-black') : signal.confidence > 60 ? 'bg-amber-400 text-black' : 'bg-zinc-400 text-black'}"> ${signal.confidence}%</span></td>
                     <td class="p-4"><span class="px-4 py-1 rounded-3xl text-xs font-bold ${signal.direction === 'BUY' ? 'bg-emerald-500' : signal.direction === 'SELL' ? 'bg-red-500' : 'bg-zinc-500'}"> ${signal.direction}</span></td>
                     <td class="p-4 text-xs text-zinc-400">${signal.reason}</td>
                     <td class="p-4 text-right">${statusHTML}</td>
@@ -1017,33 +1018,39 @@
             
             majorPairs.slice(0, 6).forEach(pair => {
                 const signal = calculateSignal(pair);
+                const dirColor = signal.direction === 'BUY' ? 'bg-emerald-500' : signal.direction === 'SELL' ? 'bg-red-500' : 'bg-zinc-500';
+                const borderColor = signal.direction === 'BUY' ? 'border-emerald-500/30' : signal.direction === 'SELL' ? 'border-red-500/30' : 'border-zinc-700';
+                const isSell = signal.direction === 'SELL';
+                const sl = isSell ? signal.price * 1.005 : signal.price * 0.995;
+                const tp = isSell ? signal.price * 0.985 : signal.price * 1.015;
+                const decimals = pair.symbol.includes('JPY') ? 2 : pair.symbol === 'BTCUSDT' ? 0 : 4;
                 const card = document.createElement('div');
-                card.className = "signal-card bg-zinc-900 border border-zinc-700 rounded-3xl p-7";
+                card.className = `signal-card bg-zinc-900 border ${borderColor} rounded-3xl p-7`;
                 card.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div>
                             <div class="text-5xl font-bold">${pair.symbol}</div>
                             <div class="text-xs text-zinc-400 mt-1">${signal.reason}</div>
                         </div>
-                        <span class="px-6 py-1 text-sm font-bold rounded-3xl ${signal.direction==='BUY'?'bg-emerald-500':'bg-red-500'}"> ${signal.direction}</span>
+                        <span class="px-6 py-1 text-sm font-bold rounded-3xl ${dirColor}"> ${signal.direction}</span>
                     </div>
                     <div class="mt-8">
                         <div class="flex justify-between text-xs text-zinc-400 mb-1">
                             <div>CONFIDENCE</div>
-                            <div class="font-mono">${signal.score}%</div>
+                            <div class="font-mono">${signal.confidence}%</div>
                         </div>
                         <div class="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                            <div class="h-2 ${signal.score >= MIN_TRADE_CONFIDENCE ? 'bg-emerald-400' : 'bg-amber-400'}" style="width: ${signal.score}%"></div>
+                            <div class="h-2 ${signal.confidence >= MIN_TRADE_CONFIDENCE ? (signal.direction === 'SELL' ? 'bg-red-400' : 'bg-emerald-400') : 'bg-amber-400'}" style="width: ${signal.confidence}%"></div>
                         </div>
                     </div>
                     <div class="mt-6 grid grid-cols-3 gap-4 text-sm">
-                        <div><div class="text-xs text-zinc-400">ENTRY</div><div class="font-mono">${signal.price.toFixed(4)}</div></div>
-                        <div><div class="text-xs text-zinc-400">SL</div><div class="font-mono">${(signal.price * 0.995).toFixed(4)}</div></div>
-                        <div><div class="text-xs text-zinc-400">TP</div><div class="font-mono">${(signal.price * 1.015).toFixed(4)}</div></div>
+                        <div><div class="text-xs text-zinc-400">ENTRY</div><div class="font-mono">${signal.price.toFixed(decimals)}</div></div>
+                        <div><div class="text-xs text-zinc-400">SL</div><div class="font-mono">${sl.toFixed(decimals)}</div></div>
+                        <div><div class="text-xs text-zinc-400">TP</div><div class="font-mono">${tp.toFixed(decimals)}</div></div>
                     </div>
                     <div class="mt-6 flex gap-3">
-                        <button onclick="executeTrade('${pair.symbol}', ' ${signal.direction}', ${signal.score})" class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 rounded-3xl font-semibold text-sm">AUTO EXECUTE</button>
-                        <button onclick="manualTrade('${pair.symbol}', ' ${signal.direction}', ${signal.score})" class="flex-1 py-4 border border-zinc-600 hover:bg-zinc-800 rounded-3xl font-semibold text-sm">MANUAL</button>
+                        <button onclick="executeTrade('${pair.symbol}', '${signal.direction}', ${signal.confidence})" class="flex-1 py-4 ${signal.direction === 'SELL' ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'} rounded-3xl font-semibold text-sm">AUTO EXECUTE</button>
+                        <button onclick="manualTrade('${pair.symbol}', '${signal.direction}', ${signal.confidence})" class="flex-1 py-4 border border-zinc-600 hover:bg-zinc-800 rounded-3xl font-semibold text-sm">MANUAL</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -1057,27 +1064,30 @@
             
             majorPairs.slice(0, 4).forEach(pair => {
                 const signal = calculateSignal(pair);
+                const dirColor = signal.direction === 'BUY' ? 'bg-emerald-500' : signal.direction === 'SELL' ? 'bg-red-500' : 'bg-zinc-500';
+                const borderColor = signal.direction === 'BUY' ? 'border-emerald-400' : signal.direction === 'SELL' ? 'border-red-400' : 'border-zinc-600';
+                const accentColor = signal.direction === 'SELL' ? 'text-red-400' : 'text-emerald-400';
                 const card = document.createElement('div');
-                card.className = "signal-card bg-zinc-900 border border-emerald-400 rounded-3xl p-7";
+                card.className = `signal-card bg-zinc-900 border ${borderColor} rounded-3xl p-7`;
                 card.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div>
                             <div class="text-5xl font-bold">${pair.symbol}</div>
-                            <div class="text-xs text-emerald-400 mt-1">🤖 AUTO GENERATED</div>
+                            <div class="text-xs ${accentColor} mt-1">🤖 AUTO GENERATED</div>
                         </div>
-                        <span class="px-6 py-1 text-sm font-bold rounded-3xl ${signal.direction==='BUY'?'bg-emerald-500':'bg-red-500'}"> ${signal.direction}</span>
+                        <span class="px-6 py-1 text-sm font-bold rounded-3xl ${dirColor}"> ${signal.direction}</span>
                     </div>
                     <div class="mt-8">
                         <div class="flex justify-between text-xs text-zinc-400 mb-1">
                             <div>CONFIDENCE</div>
-                            <div class="font-mono">${signal.score}%</div>
+                            <div class="font-mono">${signal.confidence}%</div>
                         </div>
                         <div class="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                            <div class="h-2 bg-emerald-400" style="width: ${signal.score}%"></div>
+                            <div class="h-2 ${signal.direction === 'SELL' ? 'bg-red-400' : 'bg-emerald-400'}" style="width: ${signal.confidence}%"></div>
                         </div>
                     </div>
                     <div class="mt-6 flex gap-3">
-                        <button onclick="executeTrade('${pair.symbol}', ' ${signal.direction}', ${signal.score})" class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 rounded-3xl font-semibold text-sm">EXECUTE NOW</button>
+                        <button onclick="executeTrade('${pair.symbol}', '${signal.direction}', ${signal.confidence})" class="flex-1 py-4 ${signal.direction === 'SELL' ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'} rounded-3xl font-semibold text-sm">EXECUTE NOW</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -1644,21 +1654,18 @@
 
             majorPairs.forEach(pair => {
                 const signal = calculateSignal(pair);
-                
-                // Check for high potential signals (above user threshold)
-                if (signal.score >= Math.max(MIN_TRADE_CONFIDENCE, propSettings.minConfidence) && signal.direction !== "HOLD") {
+
+                if (signal.confidence >= Math.max(MIN_TRADE_CONFIDENCE, propSettings.minConfidence) && signal.direction !== "HOLD") {
                     highPotentialFound = true;
 
-                    // Visual indication
-                    console.log(`%c[HIGH POTENTIAL] ${pair.symbol} → ${signal.direction} @ ${signal.score}% (Threshold: ${propSettings.minConfidence}%)`, 'color:#eab308; font-weight:bold');
+                    console.log(`%c[HIGH POTENTIAL] ${pair.symbol} → ${signal.direction} @ ${signal.confidence}% (Threshold: ${propSettings.minConfidence}%)`, 'color:#eab308; font-weight:bold');
 
-                    // Risk check
-                    if (canSafelyTakePropTrade(signal.score)) {
-                        const lotSize = calculateLotSize(signal.score, pair.symbol);
-                        
-                        console.log(`%c[Prop Auto] EXECUTING ${signal.direction} ${pair.symbol} @ ${signal.score}%`, 'color:#22c55e; font-weight:bold');
-                        
-                        executeTradeAuto(pair.symbol, signal.direction, signal.score);
+                    if (canSafelyTakePropTrade(signal.confidence)) {
+                        const lotSize = calculateLotSize(signal.confidence, pair.symbol);
+
+                        console.log(`%c[Prop Auto] EXECUTING ${signal.direction} ${pair.symbol} @ ${signal.confidence}%`, 'color:#22c55e; font-weight:bold');
+
+                        executeTradeAuto(pair.symbol, signal.direction, signal.confidence);
                     } else {
                         console.log(`%c[Prop Auto] High signal found but blocked by risk rules: ${pair.symbol}`, 'color:#f59e0b');
                     }
@@ -1934,14 +1941,31 @@
             return Math.max(0.01, Math.min(5, Math.round(lotSize * 100) / 100));
         }
 
+        function getLunarPhase() {
+            const synodicMonth = 29.53059;
+            const knownNewMoon = new Date('2024-01-11T11:57:00Z').getTime();
+            const now = Date.now();
+            const daysSince = (now - knownNewMoon) / 86400000;
+            const phase = ((daysSince % synodicMonth) + synodicMonth) % synodicMonth;
+            const fraction = phase / synodicMonth;
+
+            if (fraction < 0.125) return { emoji: "🌑", name: "New Moon", bias: "NEUTRAL", boost: 0 };
+            if (fraction < 0.25) return { emoji: "🌒", name: "Waxing Crescent", bias: "BULLISH", boost: 5 };
+            if (fraction < 0.375) return { emoji: "🌓", name: "First Quarter", bias: "BULLISH", boost: 8 };
+            if (fraction < 0.5) return { emoji: "🌔", name: "Waxing Gibbous", bias: "BULLISH", boost: 10 };
+            if (fraction < 0.625) return { emoji: "🌕", name: "Full Moon", bias: "BEARISH", boost: -8 };
+            if (fraction < 0.75) return { emoji: "🌖", name: "Waning Gibbous", bias: "BEARISH", boost: -10 };
+            if (fraction < 0.875) return { emoji: "🌗", name: "Last Quarter", bias: "BEARISH", boost: -6 };
+            return { emoji: "🌘", name: "Waning Crescent", bias: "NEUTRAL", boost: -2 };
+        }
+
         function calculateSignal(pair) {
             const hist = history[pair.symbol] || [pair.base];
             const price = prices[pair.symbol] || pair.base;
-            
-            // More realistic technical analysis
+
             const sma20 = hist.slice(-20).reduce((a,b) => a+b, 0) / Math.min(20, hist.length);
             const sma50 = hist.slice(-50).reduce((a,b) => a+b, 0) / Math.min(50, hist.length);
-            
+
             let gains = 0, losses = 0;
             for (let i = 1; i < hist.length; i++) {
                 const diff = hist[i] - hist[i-1];
@@ -1949,42 +1973,62 @@
             }
             const rs = gains / Math.max(losses, 0.001);
             const rsi = 100 - (100 / (1 + rs));
-            
-            const ema12 = hist.slice(-12).reduce((a,b) => a+b, 0) / 12;
-            const ema26 = hist.slice(-26).reduce((a,b) => a+b, 0) / 26;
+
+            const ema12 = hist.slice(-12).reduce((a,b) => a+b, 0) / Math.min(12, hist.length);
+            const ema26 = hist.slice(-26).reduce((a,b) => a+b, 0) / Math.min(26, hist.length);
             const macd = ema12 - ema26;
-            
-            // Bollinger Band simulation
-            const stdDev = Math.sqrt(hist.slice(-20).reduce((sum, val) => sum + Math.pow(val - sma20, 2), 0) / 20);
+
+            const stdDev = Math.sqrt(hist.slice(-20).reduce((sum, val) => sum + Math.pow(val - sma20, 2), 0) / Math.min(20, hist.length));
             const upperBand = sma20 + (stdDev * 2);
             const lowerBand = sma20 - (stdDev * 2);
-            
+
             let score = 50;
-            
-            // Stronger signals
-            if (price > sma20 && sma20 > sma50) score += 18;
-            if (rsi < 35) score += 20;
-            if (macd > 0) score += 12;
-            if (price < lowerBand) score += 15;
-            if (price > upperBand) score -= 10;
-            
-            // Lunar bias
-            score += 12;
-            
-            score = Math.max(48, Math.min(97, Math.round(score)));
-            
+            let reasons = [];
+
+            // Bullish indicators
+            if (price > sma20 && sma20 > sma50) { score += 15; reasons.push("SMA bullish crossover"); }
+            if (rsi < 30) { score += 18; reasons.push("RSI oversold"); }
+            else if (rsi < 40) { score += 8; reasons.push("RSI low"); }
+            if (macd > 0) { score += 10; reasons.push("MACD positive"); }
+            if (price < lowerBand) { score += 14; reasons.push("Below lower Bollinger"); }
+
+            // Bearish indicators
+            if (price < sma20 && sma20 < sma50) { score -= 15; reasons.push("SMA bearish crossover"); }
+            if (rsi > 70) { score -= 18; reasons.push("RSI overbought"); }
+            else if (rsi > 60) { score -= 8; reasons.push("RSI high"); }
+            if (macd < 0) { score -= 10; reasons.push("MACD negative"); }
+            if (price > upperBand) { score -= 14; reasons.push("Above upper Bollinger"); }
+
+            // Lunar phase bias (dynamic)
+            const lunar = getLunarPhase();
+            score += lunar.boost;
+            if (lunar.boost !== 0) reasons.push(`Lunar ${lunar.name}`);
+
+            score = Math.max(5, Math.min(97, Math.round(score)));
+
             let direction = "HOLD";
             let reason = "Neutral conditions";
-            
-            if (score > 78) {
+
+            if (score >= 65) {
                 direction = "BUY";
-                reason = "Strong bullish: SMA crossover + RSI oversold + Bollinger + Lunar support";
-            } else if (score < 55) {
+                reason = "Bullish: " + reasons.filter(r => !r.startsWith("RSI over") && !r.startsWith("SMA bear") && !r.startsWith("MACD neg") && !r.startsWith("Above")).join(" + ");
+            } else if (score <= 35) {
                 direction = "SELL";
-                reason = "Bearish momentum detected";
+                reason = "Bearish: " + reasons.filter(r => !r.startsWith("RSI over") && !r.startsWith("RSI low") && !r.startsWith("SMA bull") && !r.startsWith("MACD pos") && !r.startsWith("Below")).join(" + ");
             }
-            
-            return { score, direction, reason, rsi: Math.round(rsi), price };
+            if (!reason || reason === "Bullish: " || reason === "Bearish: ") reason = direction === "BUY" ? "Bullish momentum detected" : direction === "SELL" ? "Bearish momentum detected" : "Neutral conditions";
+
+            const confidence = direction === 'BUY' ? score : direction === 'SELL' ? (100 - score) : score;
+
+            return { score, confidence, direction, reason, rsi: Math.round(rsi), price, lunar };
+        }
+
+        function getMarketBias(pair, signal) {
+            if (signal.rsi > 65) return "Overbought";
+            if (signal.rsi < 35) return "Oversold";
+            if (signal.direction === "BUY") return "Bullish";
+            if (signal.direction === "SELL") return "Bearish";
+            return "Ranging";
         }
 
         function runMarketScan() {
@@ -1997,6 +2041,7 @@
                             <th class="text-left p-4">PRICE</th>
                             <th class="text-left p-4">CONFIDENCE</th>
                             <th class="text-left p-4">SIGNAL</th>
+                            <th class="text-left p-4">BIAS</th>
                             <th class="text-left p-4">REASON</th>
                             <th class="text-right p-4">ACTION</th>
                         </tr>
@@ -2008,16 +2053,18 @@
 
             majorPairs.forEach(pair => {
                 const signal = calculateSignal(pair);
+                const decimals = pair.symbol.includes('JPY') ? 2 : pair.symbol === 'BTCUSDT' ? 0 : 4;
+                const btnClass = signal.direction === 'SELL' ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700';
                 const row = document.createElement('tr');
                 row.className = "border-b border-zinc-700 hover:bg-zinc-800/50";
                 row.innerHTML = `
                     <td class="p-4 font-mono font-bold">${pair.symbol}</td>
-                    <td class="p-4 font-mono">${signal.price.toFixed(pair.symbol.includes('JPY') ? 2 : 4)}</td>
-                    <td class="p-4"><span class="inline-block px-3 py-1 rounded-2xl text-xs font-bold ${signal.score >= MIN_TRADE_CONFIDENCE ? 'bg-emerald-400 text-black' : signal.score > 60 ? 'bg-amber-400 text-black' : 'bg-zinc-400 text-black'}"> ${signal.score}%</span></td>
+                    <td class="p-4 font-mono">${signal.price.toFixed(decimals)}</td>
+                    <td class="p-4"><span class="inline-block px-3 py-1 rounded-2xl text-xs font-bold ${signal.confidence >= MIN_TRADE_CONFIDENCE ? (signal.direction === 'SELL' ? 'bg-red-400 text-black' : 'bg-emerald-400 text-black') : signal.confidence > 60 ? 'bg-amber-400 text-black' : 'bg-zinc-400 text-black'}"> ${signal.confidence}%</span></td>
                     <td class="p-4"><span class="px-4 py-1 rounded-3xl text-xs font-bold ${signal.direction === 'BUY' ? 'bg-emerald-500' : signal.direction === 'SELL' ? 'bg-red-500' : 'bg-zinc-500'}"> ${signal.direction}</span></td>
                     <td class="p-4 text-xs"><span class="px-2 py-0.5 rounded bg-zinc-700">${getMarketBias(pair, signal)}</span></td>
                     <td class="p-4 text-xs text-zinc-400">${signal.reason}</td>
-                    <td class="p-4 text-right"><button onclick="executeTrade('${pair.symbol}', '${signal.direction}', ${signal.score})" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-xs font-semibold">TRADE</button></td>
+                    <td class="p-4 text-right"><button onclick="executeTrade('${pair.symbol}', '${signal.direction}', ${signal.confidence})" class="px-6 py-2 ${btnClass} rounded-3xl text-xs font-semibold">TRADE</button></td>
                 `;
                 tbody.appendChild(row);
             });
@@ -2050,25 +2097,23 @@
             const grid = document.getElementById('lunar-grid');
             if (!grid) return;
 
-            // Simulate current lunar phase (in real app this would come from API or calculation)
-            const phases = [
-                { emoji: "🌑", name: "New Moon", bias: "NEUTRAL", boost: 0 },
-                { emoji: "🌓", name: "First Quarter", bias: "BULLISH", boost: 8 },
-                { emoji: "🌕", name: "Full Moon", bias: "BULLISH", boost: 15 },
-                { emoji: "🌗", name: "Last Quarter", bias: "BEARISH", boost: -6 }
-            ];
-            const currentPhase = phases[2]; // Full Moon produces stronger bullish readings.
-
-            const illumination = 97;
-            const lunarStrength = Math.min(100, 75 + currentPhase.boost);
+            const currentPhase = getLunarPhase();
+            const synodicMonth = 29.53059;
+            const knownNewMoon = new Date('2024-01-11T11:57:00Z').getTime();
+            const daysSince = (Date.now() - knownNewMoon) / 86400000;
+            const phaseFraction = ((daysSince % synodicMonth) + synodicMonth) % synodicMonth / synodicMonth;
+            const illumination = Math.round(phaseFraction < 0.5 ? phaseFraction * 2 * 100 : (1 - (phaseFraction - 0.5) * 2) * 100);
+            const lunarStrength = Math.min(100, 50 + Math.abs(currentPhase.boost) * 5);
+            const strengthLabel = lunarStrength >= 70 ? "STRONG" : lunarStrength >= 40 ? "MODERATE" : "WEAK";
+            const strengthColor = currentPhase.bias === 'BEARISH' ? 'text-red-400' : currentPhase.bias === 'BULLISH' ? 'text-emerald-400' : 'text-amber-400';
 
             grid.innerHTML = `
                 <div class="bg-zinc-950/70 border border-purple-500/30 rounded-2xl p-4 text-center">
                     <div class="text-5xl mb-1">${currentPhase.emoji}</div>
                     <div class="font-semibold text-base">${currentPhase.name}</div>
-                    <div class="text-[10px] text-zinc-500">MAY 2026</div>
+                    <div class="text-[10px] text-zinc-500">${new Date().toLocaleDateString('en-US', {month: 'short', year: 'numeric'}).toUpperCase()}</div>
                 </div>
-                
+
                 <div class="bg-zinc-950/70 border border-purple-500/30 rounded-2xl p-4 text-center">
                     <div class="text-purple-400 text-[10px] tracking-widest mb-0.5">ILLUMINATION</div>
                     <div class="text-4xl font-mono font-bold text-white">${illumination}<span class="text-xl">%</span></div>
@@ -2076,22 +2121,22 @@
                         <div class="h-1 bg-gradient-to-r from-purple-400 to-cyan-400 rounded-full" style="width: ${illumination}%"></div>
                     </div>
                 </div>
-                
+
                 <div class="bg-zinc-950/70 border border-purple-500/30 rounded-2xl p-4 text-center">
                     <div class="text-purple-400 text-[10px] tracking-widest mb-0.5">LUNAR BIAS</div>
                     <div class="text-3xl font-bold ${currentPhase.bias === 'BULLISH' ? 'text-emerald-400' : currentPhase.bias === 'BEARISH' ? 'text-red-400' : 'text-amber-400'}">${currentPhase.bias}</div>
-                    <div class="text-xs text-zinc-400 mt-0.5">+${currentPhase.boost} strength</div>
+                    <div class="text-xs text-zinc-400 mt-0.5">${currentPhase.boost >= 0 ? '+' : ''}${currentPhase.boost} strength</div>
                 </div>
-                
+
                 <div class="bg-zinc-950/70 border border-purple-500/30 rounded-2xl p-4 text-center">
                     <div class="text-purple-400 text-[10px] tracking-widest mb-0.5">LUNAR STRENGTH</div>
                     <div class="text-4xl font-bold text-purple-400">${lunarStrength}</div>
-                    <div class="text-[10px] text-emerald-400 -mt-1">STRONG</div>
+                    <div class="text-[10px] ${strengthColor} -mt-1">${strengthLabel}</div>
                 </div>
-                
+
                 <div class="bg-zinc-950/70 border border-purple-500/30 rounded-2xl p-4 text-xs text-center col-span-2 sm:col-span-1">
-                    <div class="text-zinc-400">Next: <span class="text-white font-medium">Last Quarter</span> • May 20</div>
-                    <div class="text-[10px] text-zinc-500 mt-1">Full Moon → Highest bullish signals</div>
+                    <div class="text-zinc-400">Phase: <span class="text-white font-medium">${currentPhase.name}</span></div>
+                    <div class="text-[10px] text-zinc-500 mt-1">${currentPhase.bias === 'BEARISH' ? 'Waning phase → Bearish bias active' : currentPhase.bias === 'BULLISH' ? 'Waxing phase → Bullish bias active' : 'Transitional phase → Neutral bias'}</div>
                 </div>
             `;
         }

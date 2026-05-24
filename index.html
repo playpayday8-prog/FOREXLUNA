@@ -187,22 +187,36 @@
             <div class="trading-card bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
                 <div class="text-zinc-400 text-sm">EURUSD</div>
                 <div id="dash-eur" class="text-3xl sm:text-4xl font-mono font-semibold mt-auto pt-2 tabular-nums">1.0878</div>
-                <div class="text-emerald-400 text-xs sm:text-sm mt-0.5">+0.18%</div>
             </div>
             <div class="trading-card bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
                 <div class="text-zinc-400 text-sm">GBPUSD</div>
                 <div id="dash-gbp" class="text-3xl sm:text-4xl font-mono font-semibold mt-auto pt-2 tabular-nums">1.2654</div>
-                <div class="text-red-400 text-xs sm:text-sm mt-0.5">-0.09%</div>
             </div>
             <div class="trading-card bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
                 <div class="text-zinc-400 text-sm">USDJPY</div>
                 <div id="dash-jpy" class="text-3xl sm:text-4xl font-mono font-semibold mt-auto pt-2 tabular-nums">148.75</div>
-                <div class="text-emerald-400 text-xs sm:text-sm mt-0.5">+0.62%</div>
             </div>
             <div class="trading-card bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
-                <div class="text-zinc-400 text-sm">BTCUSDT</div>
-                <div id="dash-btc" class="text-3xl sm:text-4xl font-mono font-semibold mt-auto pt-2 tabular-nums">68420</div>
-                <div class="text-emerald-400 text-xs sm:text-sm mt-0.5">+1.8%</div>
+                <div class="text-zinc-400 text-sm">XAUUSD <span class="text-[10px] text-yellow-400">GOLD</span></div>
+                <div id="dash-xau" class="text-3xl sm:text-4xl font-mono font-semibold mt-auto pt-2 tabular-nums text-yellow-400">2348.50</div>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-3">
+            <div class="trading-card bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
+                <div class="text-zinc-400 text-sm">NZDUSD</div>
+                <div id="dash-nzd" class="text-3xl sm:text-4xl font-mono font-semibold mt-auto pt-2 tabular-nums">0.6105</div>
+            </div>
+            <div class="trading-card bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
+                <div class="text-zinc-400 text-sm">USDCHF</div>
+                <div id="dash-chf" class="text-3xl sm:text-4xl font-mono font-semibold mt-auto pt-2 tabular-nums">0.8842</div>
+            </div>
+            <div class="trading-card bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
+                <div class="text-zinc-400 text-sm">BTCUSD <span class="text-[10px] text-orange-400">BTC</span></div>
+                <div id="dash-btc" class="text-3xl sm:text-4xl font-mono font-semibold mt-auto pt-2 tabular-nums text-orange-400">68420</div>
+            </div>
+            <div class="trading-card bg-zinc-900 border border-zinc-700 rounded-3xl p-5 flex flex-col">
+                <div class="text-zinc-400 text-sm">ETHUSD <span class="text-[10px] text-blue-400">ETH</span></div>
+                <div id="dash-eth" class="text-3xl sm:text-4xl font-mono font-semibold mt-auto pt-2 tabular-nums text-blue-400">3520.0</div>
             </div>
         </div>
         <!-- Portfolio Overview -->
@@ -881,13 +895,40 @@
         let tradeHistory = [];
 
         const majorPairs = [
+            // Major Pairs
             {symbol: "EURUSD", base: 1.0878},
             {symbol: "GBPUSD", base: 1.2654},
             {symbol: "USDJPY", base: 148.75},
             {symbol: "AUDUSD", base: 0.6523},
             {symbol: "USDCAD", base: 1.3789},
+            {symbol: "NZDUSD", base: 0.6105},
+            {symbol: "USDCHF", base: 0.8842},
+            // Cross Pairs
             {symbol: "EURJPY", base: 162.45},
-            {symbol: "BTCUSDT", base: 68420}
+            {symbol: "GBPJPY", base: 188.32},
+            {symbol: "AUDJPY", base: 97.12},
+            {symbol: "CADJPY", base: 107.85},
+            {symbol: "NZDJPY", base: 90.78},
+            {symbol: "EURGBP", base: 0.8595},
+            {symbol: "EURAUD", base: 1.6672},
+            {symbol: "EURCAD", base: 1.5012},
+            {symbol: "EURCHF", base: 0.9618},
+            {symbol: "GBPAUD", base: 1.9395},
+            {symbol: "GBPCAD", base: 1.7465},
+            {symbol: "GBPCHF", base: 1.1192},
+            {symbol: "AUDCAD", base: 0.8998},
+            {symbol: "AUDNZD", base: 1.0685},
+            {symbol: "NZDCAD", base: 0.8420},
+            // Metals
+            {symbol: "XAUUSD", base: 2348.50},
+            {symbol: "XAGUSD", base: 28.45},
+            // Crypto
+            {symbol: "BTCUSD", base: 68420},
+            {symbol: "ETHUSD", base: 3520},
+            // Indices
+            {symbol: "US30", base: 39150},
+            {symbol: "NAS100", base: 17680},
+            {symbol: "SPX500", base: 5230}
         ];
 
         function navigateTo(section) {
@@ -987,7 +1028,7 @@
 
             majorPairs.forEach(pair => {
                 const signal = calculateSignal(pair);
-                const decimals = pair.symbol.includes('JPY') ? 2 : pair.symbol === 'BTCUSDT' ? 0 : 4;
+                const decimals = getDecimals(pair.symbol);
                 const row = document.createElement('tr');
                 row.className = "border-b border-zinc-700 hover:bg-zinc-800/50";
 
@@ -1023,7 +1064,7 @@
                 const isSell = signal.direction === 'SELL';
                 const sl = isSell ? signal.price * 1.005 : signal.price * 0.995;
                 const tp = isSell ? signal.price * 0.985 : signal.price * 1.015;
-                const decimals = pair.symbol.includes('JPY') ? 2 : pair.symbol === 'BTCUSDT' ? 0 : 4;
+                const decimals = getDecimals(pair.symbol);
                 const card = document.createElement('div');
                 card.className = `signal-card bg-zinc-900 border ${borderColor} rounded-3xl p-7`;
                 card.innerHTML = `
@@ -1685,7 +1726,10 @@
             const sym = (symbol || '').toUpperCase();
             if (sym.includes('JPY')) return pips * 0.01;
             if (sym.includes('XAU') || sym.includes('GOLD')) return pips * 0.1;
+            if (sym.includes('XAG') || sym.includes('SILVER')) return pips * 0.01;
             if (sym.includes('BTC')) return pips * 1;
+            if (sym.includes('ETH')) return pips * 0.1;
+            if (sym === 'US30' || sym === 'NAS100' || sym === 'SPX500') return pips * 1;
             return pips * 0.0001;
         }
 
@@ -1926,14 +1970,17 @@
         }
 
         function calculateLotSize(signalScore, pair) {
-            // Use actual Prop Firm account size if available, otherwise fall back to portfolio balance
             const balance = propSettings.accountSize || portfolioBalance;
             const riskPercent = propSettings.maxRiskPerTrade || 1.0;
             const riskAmount = balance * (riskPercent / 100);
 
             let pipValue = 10;
             if (pair.includes('JPY')) pipValue = 9.5;
+            if (pair.includes('XAU')) pipValue = 1;
+            if (pair.includes('XAG')) pipValue = 5;
             if (pair.includes('BTC')) pipValue = 0.01;
+            if (pair.includes('ETH')) pipValue = 0.1;
+            if (pair === 'US30' || pair === 'NAS100' || pair === 'SPX500') pipValue = 1;
 
             const stopLossPips = defaultStopLossPips || 50;
             const lotSize = riskAmount / (stopLossPips * pipValue);
@@ -2053,7 +2100,7 @@
 
             majorPairs.forEach(pair => {
                 const signal = calculateSignal(pair);
-                const decimals = pair.symbol.includes('JPY') ? 2 : pair.symbol === 'BTCUSDT' ? 0 : 4;
+                const decimals = getDecimals(pair.symbol);
                 const btnClass = signal.direction === 'SELL' ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700';
                 const row = document.createElement('tr');
                 row.className = "border-b border-zinc-700 hover:bg-zinc-800/50";
@@ -2070,24 +2117,49 @@
             });
         }
 
+        function getVolatility(symbol) {
+            if (symbol.includes('XAU')) return 1.5;
+            if (symbol.includes('XAG')) return 0.08;
+            if (symbol.includes('BTC')) return 150;
+            if (symbol.includes('ETH')) return 15;
+            if (symbol === 'US30' || symbol === 'NAS100' || symbol === 'SPX500') return 20;
+            if (symbol.includes('JPY')) return 0.08;
+            return 0.0008;
+        }
+
+        function getDecimals(symbol) {
+            if (symbol.includes('JPY')) return 2;
+            if (symbol.includes('XAU')) return 2;
+            if (symbol.includes('XAG')) return 3;
+            if (symbol.includes('BTC') || symbol === 'US30' || symbol === 'NAS100' || symbol === 'SPX500') return 0;
+            if (symbol.includes('ETH')) return 1;
+            return 4;
+        }
+
         function updatePrices() {
             majorPairs.forEach(pair => {
                 if (!prices[pair.symbol]) prices[pair.symbol] = pair.base;
                 if (!history[pair.symbol]) history[pair.symbol] = Array.from({length: 30}, () => prices[pair.symbol]);
-                
-                const volatility = pair.symbol.includes('JPY') ? 0.08 : 0.0008;
+
+                const volatility = getVolatility(pair.symbol);
                 const change = (Math.random() - 0.5) * volatility;
                 prices[pair.symbol] += change;
-                
+
                 history[pair.symbol].push(prices[pair.symbol]);
                 if (history[pair.symbol].length > 50) history[pair.symbol].shift();
             });
-            
-            document.getElementById('dash-eur').textContent = prices['EURUSD'].toFixed(4);
-            document.getElementById('dash-gbp').textContent = prices['GBPUSD'].toFixed(4);
-            document.getElementById('dash-jpy').textContent = prices['USDJPY'].toFixed(2);
-            document.getElementById('dash-btc').textContent = Math.round(prices['BTCUSDT']);
-            
+
+            const dashCards = {
+                'EURUSD': 'dash-eur', 'GBPUSD': 'dash-gbp',
+                'USDJPY': 'dash-jpy', 'XAUUSD': 'dash-xau',
+                'BTCUSD': 'dash-btc', 'NZDUSD': 'dash-nzd',
+                'USDCHF': 'dash-chf', 'ETHUSD': 'dash-eth'
+            };
+            Object.entries(dashCards).forEach(([symbol, id]) => {
+                const el = document.getElementById(id);
+                if (el && prices[symbol]) el.textContent = prices[symbol].toFixed(getDecimals(symbol));
+            });
+
             // Also refresh live chart section displays
             if (typeof updateLivePriceDisplay === 'function') updateLivePriceDisplay();
             if (priceChart && typeof updateLiveChart === 'function') updateLiveChart();
@@ -2266,20 +2338,57 @@
         let accountPollingInterval = null;
         let accountInfoCache = {};
         let accountSyncPending = false;
+        let fetchInFlight = false;
+        let consecutiveFailures = 0;
+
+        async function checkMetaApiHealth() {
+            try {
+                const res = await fetch('/api/metaapi-health');
+                const data = await res.json();
+                return data;
+            } catch {
+                return { status: 'unreachable', message: 'Cannot reach health endpoint' };
+            }
+        }
 
         async function fetchAccountInfo(account) {
             if (!account || !account.id) return null;
+            if (fetchInFlight) return null;
+            fetchInFlight = true;
             try {
                 setBrokerSyncState(false);
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 55000);
+
                 const res = await fetch('/api/metaapi-account-info', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ accountId: account.id })
+                    body: JSON.stringify({ accountId: account.id }),
+                    signal: controller.signal
                 });
+                clearTimeout(timeout);
+
                 if (!res.ok) {
-                    setBrokerSyncState(false, 'Broker synchronization unavailable');
+                    consecutiveFailures++;
+                    const errData = await res.json().catch(() => ({}));
+                    const errMsg = errData.error || 'Broker synchronization unavailable';
+
+                    if (consecutiveFailures >= 3) {
+                        const health = await checkMetaApiHealth();
+                        if (health.status === 'invalid_token') {
+                            setBrokerSyncState(false, 'MetaAPI token invalid — update in Netlify settings');
+                        } else if (health.status === 'unreachable' || health.status === 'timeout') {
+                            setBrokerSyncState(false, 'MetaAPI servers unreachable — retrying...');
+                        } else {
+                            setBrokerSyncState(false, errMsg);
+                        }
+                    } else {
+                        setBrokerSyncState(false, errMsg);
+                    }
                     return null;
                 }
+
+                consecutiveFailures = 0;
                 const info = await res.json();
 
                 if (info.synchronized === false && info.connectionStatus) {
@@ -2306,9 +2415,13 @@
                     renderSavedAccounts();
                 }
                 return info;
-            } catch {
-                setBrokerSyncState(false, 'Broker synchronization unavailable');
+            } catch (err) {
+                consecutiveFailures++;
+                const msg = err.name === 'AbortError' ? 'Connection timed out — retrying...' : 'Broker synchronization unavailable';
+                setBrokerSyncState(false, msg);
                 return null;
+            } finally {
+                fetchInFlight = false;
             }
         }
 
@@ -2445,11 +2558,10 @@
 
         function updateBrokerSymbolPrices(symbolPrices, positions) {
             const symbolIds = {
-                EURUSD: 'dash-eur',
-                GBPUSD: 'dash-gbp',
-                USDJPY: 'dash-jpy',
-                BTCUSDT: 'dash-btc',
-                BTCUSD: 'dash-btc'
+                EURUSD: 'dash-eur', GBPUSD: 'dash-gbp', USDJPY: 'dash-jpy',
+                XAUUSD: 'dash-xau', NZDUSD: 'dash-nzd', USDCHF: 'dash-chf',
+                BTCUSD: 'dash-btc', BTCUSDT: 'dash-btc',
+                ETHUSD: 'dash-eth', ETHUSD: 'dash-eth'
             };
             positions.forEach(pos => {
                 const price = Number(pos.currentPrice ?? pos.price ?? pos.openPrice);
@@ -2459,8 +2571,14 @@
                 const price = Number(symbolPrices[symbol]);
                 const el = document.getElementById(id);
                 if (el && Number.isFinite(price)) {
-                    el.textContent = price.toFixed(symbol.includes('JPY') ? 3 : symbol.includes('BTC') ? 2 : 5);
+                    el.textContent = price.toFixed(getDecimals(symbol));
                     prices[symbol] = price;
+                }
+            });
+            majorPairs.forEach(pair => {
+                const livePrice = Number(symbolPrices[pair.symbol]);
+                if (Number.isFinite(livePrice)) {
+                    prices[pair.symbol] = livePrice;
                 }
             });
         }
@@ -2469,11 +2587,12 @@
             if (accountPollingInterval) clearInterval(accountPollingInterval);
             if (connectedAccount && connectedAccount.id) {
                 fetchAccountInfo(connectedAccount);
+                const pollInterval = consecutiveFailures >= 3 ? 30000 : 10000;
                 accountPollingInterval = setInterval(() => {
                     if (connectedAccount && connectedAccount.id) {
                         fetchAccountInfo(connectedAccount);
                     }
-                }, 5000);
+                }, pollInterval);
             }
         }
 
